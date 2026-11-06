@@ -1,0 +1,137 @@
+[
+  {
+    "id": "shop-auth-jwt-easy",
+    "app": "shop-auth",
+    "title": "Shop - Weak JWT None Algorithm (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Gain unauthorized administrative access to the VulnShop Executive Portal (/api/admin/dashboard) by exploiting the insecure acceptance of the 'none' algorithm in JWT authentication.",
+    "flag_env": "FLAG_SHOP_AUTH_JWT_EASY",
+    "hints": [
+      "Inspect the JWT token structure (Header.Payload.Signature) sent to the application.",
+      "The 'alg' parameter in the JWT header can be changed to 'none'. In unsecured implementations, the server will skip signature verification if the signature component is omitted."
+    ]
+  },
+  {
+    "id": "shop-auth-jwt-medium",
+    "app": "shop-auth",
+    "title": "Shop - Weak JWT Secret Brute Force (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "The server now rejects 'none' algorithm JWTs, but signs tokens using a weak dictionary HMAC secret. Crack the secret key and forge a valid administrator token to access /api/admin/dashboard.",
+    "flag_env": "FLAG_SHOP_AUTH_JWT_MEDIUM",
+    "hints": [
+      "Obtain a valid user token (e.g. by logging in or registering a customer account) and inspect its HMAC-SHA256 signature.",
+      "Use a wordlist attack tool like hashcat (-m 16500), john, or a simple script to crack common weak secrets like 'secret123', then re-sign with username 'admin'."
+    ]
+  },
+  {
+    "id": "shop-auth-jwt-hard",
+    "app": "shop-auth",
+    "title": "Shop - Weak JWT Header Parameter Confusion (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "The server uses a strong random HMAC secret, but inspects JWT header parameters such as 'kid' (Key ID) without input sanitization or accepts embedded 'jwk' keys. Exploit parameter confusion to forge an administrative token.",
+    "flag_env": "FLAG_SHOP_AUTH_JWT_HARD",
+    "hints": [
+      "Check the default token issued in Hard mode. Notice the 'kid' parameter pointing to a key path.",
+      "What happens if the 'kid' header parameter is pointed to a predictable or empty file such as '/dev/null'? Or what if an embedded 'jwk' object with a known key is provided?"
+    ]
+  },
+  {
+    "id": "shop-auth-bruteforce-easy",
+    "app": "shop-auth",
+    "title": "Shop - No Login Rate Limiting (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "The administrator account has a standard weak password and the login endpoint (/api/login) enforces no rate limiting or lockout mechanisms. Brute force the login credentials to capture the flag.",
+    "flag_env": "FLAG_SHOP_AUTH_BRUTEFORCE_EASY",
+    "hints": [
+      "The administrator username is 'admin'. Try top common passwords (e.g. 'admin123', 'password', 'welcome123').",
+      "Because there are no rate limits in Easy mode, automated credential attempts can be sent as quickly as desired."
+    ]
+  },
+  {
+    "id": "shop-auth-bruteforce-medium",
+    "app": "shop-auth",
+    "title": "Shop - Header-Bypass Rate Limiting (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "The login endpoint now enforces a rate limiter blocking clients after 5 failed attempts. However, client IP detection trusts spoofable HTTP request headers. Bypass the rate limiter to find the administrator password.",
+    "flag_env": "FLAG_SHOP_AUTH_BRUTEFORCE_MEDIUM",
+    "hints": [
+      "After 5 failed attempts from an IP address, the server responds with HTTP 429 Too Many Requests.",
+      "Examine which HTTP headers reverse proxies use to identify client IPs (e.g. X-Forwarded-For, Client-IP). Rotating this header resets the rate limit bucket."
+    ]
+  },
+  {
+    "id": "shop-auth-bruteforce-hard",
+    "app": "shop-auth",
+    "title": "Shop - Timing/Response Attack (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "In Hard mode, the primary administrator account uses an unguessable password. However, a hidden staff user exists with a dictionary password. Exploit login response timing discrepancies to enumerate existing users, then authenticate to capture the flag.",
+    "flag_env": "FLAG_SHOP_AUTH_BRUTEFORCE_HARD",
+    "hints": [
+      "Compare the response time of /api/login for valid usernames versus non-existent usernames. Notice that cryptographic verification delays response times for real accounts.",
+      "Check common service and staff usernames like 'support', 'staff', 'sales', or 'guest'. Once identified, test top dictionary passwords against that account."
+    ]
+  },
+  {
+    "id": "shop-auth-reset-easy",
+    "app": "shop-auth",
+    "title": "Shop - Predictable Reset Token MD5 (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "The password reset mechanism (/api/forgot-password) generates deterministic, predictable reset tokens based on MD5 hashing of the username. Reset the administrator's password to capture the flag.",
+    "flag_env": "FLAG_SHOP_AUTH_RESET_EASY",
+    "hints": [
+      "Request a password reset for 'admin'. Analyze how the reset token is formatted.",
+      "The token is simply md5(username). Compute md5('admin') and submit it to /api/reset-password along with your desired new password."
+    ]
+  },
+  {
+    "id": "shop-auth-reset-medium",
+    "app": "shop-auth",
+    "title": "Shop - Predictable Reset Timestamp (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "The password reset token is now generated using a timestamp-based hash: sha1(username + unix_timestamp_seconds). Narrow the time window to predict the valid token and reset the administrator's password.",
+    "flag_env": "FLAG_SHOP_AUTH_RESET_MEDIUM",
+    "hints": [
+      "The token is generated at the exact moment /api/forgot-password is called. Check the server's Date response header or record your client timestamp.",
+      "Compute sha1('admin' + timestamp) for seconds surrounding the request timestamp (e.g. +/- 5 seconds) to find the valid reset token."
+    ]
+  },
+  {
+    "id": "shop-auth-reset-hard",
+    "app": "shop-auth",
+    "title": "Shop - Host Header Poisoning Reset (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Authentication",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "In Hard mode, reset tokens are cryptographically random. However, the password reset email construction trusts user-supplied Host / X-Forwarded-Host headers. Exploit Host Header Poisoning to intercept the administrator's reset token and reset their password.",
+    "flag_env": "FLAG_SHOP_AUTH_RESET_HARD",
+    "hints": [
+      "Check the simulated email outbox at /api/emails. Notice how the reset URL inside the email body is formed.",
+      "Send a forgot-password request with a modified 'Host' or 'X-Forwarded-Host' header (e.g. 'attacker.local'). Check the outgoing email outbox to verify that the generated link was poisoned with your host, then submit that token to /api/reset-password."
+    ]
+  }
+]

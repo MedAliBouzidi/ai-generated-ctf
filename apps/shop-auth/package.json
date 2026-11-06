@@ -1,0 +1,20 @@
+{
+  "name": "vulnlab-shop-auth",
+  "version": "1.0.0",
+  "description": "VulnLab CTF - Shop Auth Vulnerable Application",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

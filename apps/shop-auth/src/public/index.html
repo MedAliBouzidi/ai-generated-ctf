@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VulnShop - Cyber Hardware & Security Lab</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="brand" onclick="app.showView('catalog'); return false;">
+        <span class="brand-icon">⚡</span>
+        <div>
+          <div class="brand-title">VulnShop</div>
+          <div class="brand-tagline">Cyber Gear & Auth Lab</div>
+        </div>
+      </a>
+
+      <div class="nav-center">
+        <!-- Difficulty Badge & Switcher -->
+        <button id="difficultyBadge" class="difficulty-badge difficulty-easy" onclick="app.openDifficultyModal()" title="Click to view or switch difficulty mode">
+          <span class="status-dot"></span>
+          <span id="difficultyLabel">EASY MODE</span>
+        </button>
+      </div>
+
+      <nav>
+        <ul class="nav-links">
+          <li><button class="nav-link active" id="nav-catalog" onclick="app.showView('catalog')">Catalog</button></li>
+          <li><button class="nav-link" id="nav-emails" onclick="app.showView('emails')">Mailbox Outbox</button></li>
+          <li><button class="nav-link" id="nav-admin" onclick="app.showView('admin')">Admin Portal</button></li>
+          <li><button class="nav-link" id="nav-auth" onclick="app.showView('auth')">Account</button></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Flag Banner (Appears when flag is acquired) -->
+    <div id="flagBanner" class="flag-banner">
+      <div class="flag-info">
+        <span style="font-size: 1.5rem">🚩</span>
+        <div>
+          <div class="flag-title" id="flagTitle">Vulnerability Solved! Flag Captured:</div>
+          <div class="flag-value" id="flagDisplay">VULNLAB{...}</div>
+        </div>
+      </div>
+      <button class="copy-btn" onclick="app.copyFlag()">Copy Flag</button>
+    </div>
+
+    <!-- VIEW 1: CATALOG -->
+    <div id="view-catalog" class="view-container active">
+      <section class="hero">
+        <div class="hero-text">
+          <h1>Hardware Pentesting & Red Team Gear</h1>
+          <p>
+            VulnShop is the premier underground supplier for RF analysis, covert hardware implants, and firmware diagnostic tools.
+          </p>
+          <div class="hero-badges">
+            <span class="chip">Port: 8004</span>
+            <span class="chip">Category: Authentication</span>
+            <span class="chip">OWASP: A07:2021</span>
+            <span class="chip">Challenges: JWT • Bruteforce • Reset</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-title">
+        <span>Featured Field Hardware</span>
+        <span style="font-size: 0.85rem; color: var(--text-muted)">8 Products Available</span>
+      </div>
+
+      <div class="products-grid" id="productsGrid">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- VIEW 2: AUTH / LOGIN / REGISTER -->
+    <div id="view-auth" class="view-container">
+      <div style="max-width: 520px; margin: 2rem auto;">
+        <div class="card">
+          <div class="tabs">
+            <button class="tab-btn active" id="tab-login" onclick="app.switchAuthTab('login')">Sign In</button>
+            <button class="tab-btn" id="tab-register" onclick="app.switchAuthTab('register')">Create Account</button>
+            <button class="tab-btn" id="tab-reset" onclick="app.switchAuthTab('reset')">Password Reset</button>
+          </div>
+
+          <!-- Auth Alerts -->
+          <div id="authAlert" style="display: none;" class="alert"></div>
+
+          <!-- LOGIN FORM -->
+          <form id="loginForm" onsubmit="app.handleLogin(event)">
+            <div class="form-group">
+              <label class="form-label" for="loginUsername">Username</label>
+              <input type="text" id="loginUsername" class="form-control" placeholder="e.g. admin or alice" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+              <div class="form-text">Admin credentials or staff logins may be audited.</div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" style="flex: 1;">Sign In</button>
+            </div>
+          </form>
+
+          <!-- REGISTER FORM -->
+          <form id="registerForm" style="display: none;" onsubmit="app.handleRegister(event)">
+            <div class="form-group">
+              <label class="form-label" for="regUsername">Username</label>
+              <input type="text" id="regUsername" class="form-control" placeholder="Choose a handle" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="regEmail">Email Address</label>
+              <input type="email" id="regEmail" class="form-control" placeholder="user@domain.local" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="regPassword">Password</label>
+              <input type="password" id="regPassword" class="form-control" placeholder="At least 4 characters" required>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" style="flex: 1;">Register Account</button>
+            </div>
+          </form>
+
+          <!-- FORGOT / RESET FORM -->
+          <div id="resetSection" style="display: none;">
+            <form id="forgotForm" onsubmit="app.handleForgotPassword(event)" style="margin-bottom: 2rem;">
+              <h4 style="margin-bottom: 0.75rem; color: #fff;">1. Request Password Reset Link</h4>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                Enter a username to dispatch a reset email to the Outbox.
+              </p>
+              <div class="form-group">
+                <label class="form-label" for="forgotUsername">Target Username</label>
+                <input type="text" id="forgotUsername" class="form-control" placeholder="e.g. admin" required>
+              </div>
+              <button type="submit" class="btn btn-secondary" style="width: 100%;">Dispatch Reset Token</button>
+            </form>
+
+            <form id="redeemForm" onsubmit="app.handleResetPassword(event)">
+              <h4 style="margin-bottom: 0.75rem; color: #fff;">2. Submit Reset Token</h4>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                Submit the calculated or intercepted token to set a new password.
+              </p>
+              <div class="form-group">
+                <label class="form-label" for="resetToken">Reset Token</label>
+                <input type="text" id="resetToken" class="form-control" placeholder="Hex token" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="resetNewPassword">New Password</label>
+                <input type="password" id="resetNewPassword" class="form-control" placeholder="Enter new password" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Update Password</button>
+            </form>
+          </div>
+
+          <!-- Active Profile View (when logged in) -->
+          <div id="profileSection" style="display: none;">
+            <div class="card-header" style="padding-top: 0;">
+              <div class="card-title">User Profile</div>
+              <button class="btn btn-secondary" onclick="app.logout()">Log Out</button>
+            </div>
+            <div style="font-size: 0.9rem; margin-bottom: 1rem;">
+              <div><strong>Handle:</strong> <span id="profUsername">-</span></div>
+              <div><strong>Email:</strong> <span id="profEmail">-</span></div>
+              <div><strong>Role:</strong> <span class="chip" id="profRole">-</span></div>
+              <div><strong>Balance:</strong> $<span id="profBalance">0.00</span></div>
+            </div>
+            <div>
+              <label class="form-label">Current Session JWT Token:</label>
+              <textarea id="profJwt" class="form-control form-control-textarea" readonly></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: SIMULATED MAILBOX OUTBOX -->
+    <div id="view-emails" class="view-container">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📬 Simulated Outbox (Mailhog / Dev Mailer)</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Intercept outgoing password reset emails, inspect headers, and analyze token generation.
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-secondary" onclick="app.fetchEmails()">Refresh</button>
+            <button class="btn btn-danger" onclick="app.clearEmails()">Clear Logs</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Timestamp</th>
+                <th>Recipient</th>
+                <th>Host Header</th>
+                <th>Generated Reset Link / Token</th>
+              </tr>
+            </thead>
+            <tbody id="emailsTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted);">No outgoing emails recorded yet. Request a password reset to populate.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: ADMIN PORTAL -->
+    <div id="view-admin" class="view-container">
+      <div id="adminDenied" class="card" style="display: none; border-color: var(--accent-rose);">
+        <div style="text-align: center; padding: 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+          <h2 style="color: var(--accent-rose); margin-bottom: 0.5rem;">Administrative Access Restricted</h2>
+          <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 1.5rem auto;">
+            The VulnShop Executive Portal requires an administrative role (<code class="code-pill">role: "admin"</code>) verified by a valid JWT token.
+          </p>
+          <button class="btn btn-primary" onclick="app.showView('auth')">Sign in with Admin Credentials</button>
+        </div>
+      </div>
+
+      <div id="adminContent" style="display: none;">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Quarterly Revenue</div>
+            <div class="metric-value" style="color: var(--accent-emerald);">$198,420</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Hardware Orders</div>
+            <div class="metric-value">1,482</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">System Mode</div>
+            <div class="metric-value" id="adminDiffMetric" style="color: var(--accent-cyan); text-transform: uppercase;">EASY</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Security Tier</div>
+            <div class="metric-value" style="color: #a855f7;">Strict JWT</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🛡️ Admin Security & Token Verification Console</div>
+            <span class="chip" id="adminUserPill">Authenticated: admin</span>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+            Test custom forged JWT tokens directly against the dashboard endpoint <code class="code-pill">/api/admin/dashboard</code>.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label" for="testTokenInput">Custom JWT Token (Authorization: Bearer)</label>
+            <textarea id="testTokenInput" class="form-control form-control-textarea" placeholder="header.payload.signature"></textarea>
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <button class="btn btn-primary" onclick="app.testAdminToken()">Submit Token to Dashboard</button>
+            <button class="btn btn-secondary" onclick="app.populateCurrentToken()">Load Current Cookie Token</button>
+          </div>
+
+          <div id="tokenTestResult" style="margin-top: 1.25rem; display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- DIFFICULTY SELECTOR MODAL -->
+  <div id="diffModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; display: none; align-items: center; justify-content: center; padding: 1rem;">
+    <div class="card" style="max-width: 580px; width: 100%; margin: 0;">
+      <div class="card-header">
+        <div class="card-title">⚙️ VulnLab Difficulty Settings</div>
+        <button class="btn btn-secondary" onclick="app.closeDifficultyModal()" style="padding: 0.2rem 0.5rem;">✕</button>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+        Select the target security difficulty to test corresponding vulnerabilities:
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem;">
+        <div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; cursor: pointer;" onclick="app.selectDifficulty('easy')">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <strong style="color: #34d399;">🟢 EASY (100 pts)</strong>
+            <span class="chip">alg: "none" • No Rate Limit • md5(user)</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">
+            JWT accepts "alg": "none". Admin login has no rate limiting. Password reset token is md5(username).
+          </div>
+        </div>
+
+        <div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; cursor: pointer;" onclick="app.selectDifficulty('medium')">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <strong style="color: #fbbf24;">🟡 MEDIUM (200 pts)</strong>
+            <span class="chip">Weak Secret • Header IP Bypass • sha1(user+time)</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">
+            JWT uses weak dictionary key ('secret123'). Rate limiter blocks after 5 attempts but trusts client IP headers. Reset token uses timestamp.
+          </div>
+        </div>
+
+        <div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; cursor: pointer;" onclick="app.selectDifficulty('hard')">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <strong style="color: #fb7185;">🔴 HARD (300 pts)</strong>
+            <span class="chip">kid Traversal • Timing Discrepancy • Host Poisoning</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary);">
+            JWT vulnerable to Key ID (kid) traversal or embedded JWK. Staff username discovered via timing discrepancy. Reset token hijacked via Host header poisoning.
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="app.closeDifficultyModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>VulnLab CTF Platform • VulnShop Authentication Practice Lab • Port 8004</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

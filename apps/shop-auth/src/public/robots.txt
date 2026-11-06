@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /admin
+Disallow: /api/emails
+# Security key store: /keys/default.key
