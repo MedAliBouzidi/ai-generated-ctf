@@ -1,0 +1,137 @@
+[
+  {
+    "id": "file-share-traversal-easy",
+    "app": "file-share",
+    "title": "FileShare - Path Traversal (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Path Traversal",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Exploit unvalidated file path parameters in download and preview endpoints to read arbitrary files outside the web directory.",
+    "flag_env": "FLAG_FILE_SHARE_TRAVERSAL_EASY",
+    "hints": [
+      "Inspect the query parameter passed to /api/download and /api/preview.",
+      "The server does not validate or sanitize relative directory tokens. Use '../../../../app/flag_traversal.txt' to extract the flag."
+    ]
+  },
+  {
+    "id": "file-share-traversal-medium",
+    "app": "file-share",
+    "title": "FileShare - Path Traversal (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Path Traversal",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Bypass a single-pass path traversal filter that strips '../' tokens from file paths.",
+    "flag_env": "FLAG_FILE_SHARE_TRAVERSAL_MEDIUM",
+    "hints": [
+      "The application executes a single-pass string replacement stripping '../'.",
+      "Nested patterns like '....//' collapse into '../' after the single replacement, or URL encoded sequences like '%2e%2e%2f' evade the filter."
+    ]
+  },
+  {
+    "id": "file-share-traversal-hard",
+    "app": "file-share",
+    "title": "FileShare - Path Traversal (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Path Traversal",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Bypass recursive directory traversal filters or path prefix validation to extract the secret flag file.",
+    "flag_env": "FLAG_FILE_SHARE_TRAVERSAL_HARD",
+    "hints": [
+      "The download filter requires paths to start with 'uploads/' or recursively strips '../'.",
+      "Satisfy the required prefix while traversing back out using 'uploads/../../app/flag_traversal.txt' or test double URL encoding (%252e%252e%252f)."
+    ]
+  },
+  {
+    "id": "file-share-upload-easy",
+    "app": "file-share",
+    "title": "FileShare - Unrestricted File Upload (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "File Upload",
+    "owasp": "A03:2021-Injection",
+    "description": "Upload a Python script directly without file extension or content restrictions and trigger execution via the script runner.",
+    "flag_env": "FLAG_FILE_SHARE_UPLOAD_EASY",
+    "hints": [
+      "The /api/upload endpoint allows any file extension, including .py and .sh.",
+      "Upload a script that reads environment variables and use the /api/execute endpoint to trigger it."
+    ]
+  },
+  {
+    "id": "file-share-upload-medium",
+    "app": "file-share",
+    "title": "FileShare - Unrestricted File Upload (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "File Upload",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass a naive extension blacklist restricting .py and .sh files to achieve script execution.",
+    "flag_env": "FLAG_FILE_SHARE_UPLOAD_MEDIUM",
+    "hints": [
+      "The upload endpoint blocks filenames ending with exact lowercase extensions .py or .sh.",
+      "Check how case sensitivity or alternate script extensions (.PY, .py3, .phtml) are handled by the validator and runner."
+    ]
+  },
+  {
+    "id": "file-share-upload-hard",
+    "app": "file-share",
+    "title": "FileShare - Unrestricted File Upload (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "File Upload",
+    "owasp": "A03:2021-Injection",
+    "description": "Achieve server-side code execution by exploiting filename path traversal or Zip Slip archive extraction to drop an executable plugin.",
+    "flag_env": "FLAG_FILE_SHARE_UPLOAD_HARD",
+    "hints": [
+      "Direct uploads to the uploads folder enforce a strict whitelist, but the server retains a path traversal in the filename parameter.",
+      "Upload a file with filename='../../plugins/exploit.py' or provide a zip archive with directory traversal entries to drop files into the plugins directory, then run it via /api/plugins/run."
+    ]
+  },
+  {
+    "id": "file-share-mime-easy",
+    "app": "file-share",
+    "title": "FileShare - Weak MIME Validation (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "MIME Validation",
+    "owasp": "A04:2021-Insecure Design",
+    "description": "Bypass client-side MIME type verification by spoofing the Content-Type HTTP header during image upload.",
+    "flag_env": "FLAG_FILE_SHARE_MIME_EASY",
+    "hints": [
+      "The image upload endpoint /api/upload/image validates the client's Content-Type header without inspecting file contents.",
+      "Use curl's ';type=image/png' option to upload non-image content disguised as a valid PNG."
+    ]
+  },
+  {
+    "id": "file-share-mime-medium",
+    "app": "file-share",
+    "title": "FileShare - Weak MIME Validation (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "MIME Validation",
+    "owasp": "A04:2021-Insecure Design",
+    "description": "Bypass magic byte verification by constructing a polyglot file containing valid image headers and an executable script payload.",
+    "flag_env": "FLAG_FILE_SHARE_MIME_MEDIUM",
+    "hints": [
+      "The server verifies the leading magic bytes (e.g. GIF89a or PNG header) but ignores the rest of the file.",
+      "Prefix your script payload with the 6-byte string 'GIF89a;' and upload as a GIF."
+    ]
+  },
+  {
+    "id": "file-share-mime-hard",
+    "app": "file-share",
+    "title": "FileShare - Weak MIME Validation (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "MIME Validation",
+    "owasp": "A04:2021-Insecure Design",
+    "description": "Exploit XML External Entity (XXE) injection within the SVG vector image parser to read protected server secrets.",
+    "flag_env": "FLAG_FILE_SHARE_MIME_HARD",
+    "hints": [
+      "The image gallery accepts SVG vector files and processes them with an XML engine configured with external entity resolution enabled.",
+      "Embed a DOCTYPE declaration with an ENTITY pointing to 'file:///app/flag_mime_hard.txt' within an SVG file."
+    ]
+  }
+]

