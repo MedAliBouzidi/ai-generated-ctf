@@ -1,0 +1,28 @@
+{
+  "name": "notes-idor",
+  "version": "1.0.0",
+  "description": "VulnLab CTF - Notes IDOR and Broken Access Control Challenge App",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test-e2e.js",
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
+  },
+  "keywords": [
+    "ctf",
+    "security",
+    "idor",
+    "access-control",
+    "vulnlab"
+  ],
+  "author": "VulnLab",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0",
+    "pg": "^8.23.1",
+    "uuid": "^14.0.3"
+  }
+}

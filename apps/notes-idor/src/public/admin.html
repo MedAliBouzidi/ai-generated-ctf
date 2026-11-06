@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VulnLab - Administrator Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <a href="/" class="brand">
+      <div class="brand-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">A</div>
+      <span>VulnLab Admin Console</span>
+    </a>
+
+    <!-- Active Difficulty Badge -->
+    <div class="diff-container">
+      <span class="diff-label">Difficulty:</span>
+      <span id="admin-diff-badge" class="diff-badge easy">Easy</span>
+    </div>
+
+    <nav class="nav-links">
+      <a href="/" class="nav-link">&larr; Back to Notes</a>
+      <button class="btn btn-secondary btn-sm" onclick="logoutAdmin()">Logout</button>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- Access Denied Card (Shown if non-admin) -->
+    <div id="denied-view" class="card" style="max-width: 600px; margin: 4rem auto; text-align: center; display: none;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🚫</div>
+      <h2 style="color: #f87171; margin-bottom: 0.75rem;">Access Denied (403 Forbidden)</h2>
+      <p id="denied-reason" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+        You must possess administrator privileges to access this console.
+      </p>
+      <div id="denied-hint" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1rem; font-size: 0.85rem; color: #fca5a5; margin-bottom: 1.5rem; text-align: left;">
+      </div>
+      <a href="/" class="btn btn-primary">Return to Notes Portal</a>
+    </div>
+
+    <!-- Admin Console Dashboard (Shown when authorized) -->
+    <div id="admin-dashboard-view" style="display: none;">
+
+      <!-- Flag Captured Banner -->
+      <div class="flag-banner">
+        <div class="flag-header">
+          <span class="flag-title">👑 PRIVILEGE ESCALATION SOLVED</span>
+          <span id="flag-tier-badge" class="diff-badge easy">Easy Flag</span>
+        </div>
+        <p style="font-size: 0.9rem; color: #fde68a;">
+          You successfully bypassed authorization checks to access the Administrator Portal!
+        </p>
+        <div class="flag-box">
+          <span id="admin-flag-text">Loading CTF flag...</span>
+          <button class="btn btn-secondary btn-sm" onclick="copyAdminFlag()">Copy Flag</button>
+        </div>
+      </div>
+
+      <!-- Overview Stats Cards -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+        <div class="card">
+          <span style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Total Users</span>
+          <h2 id="stat-users" style="color: var(--primary); margin-top: 0.5rem;">-</h2>
+        </div>
+        <div class="card">
+          <span style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Database Engine</span>
+          <h2 id="stat-db" style="color: #34d399; margin-top: 0.5rem; font-size: 1.25rem;">-</h2>
+        </div>
+        <div class="card">
+          <span style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Active Difficulty</span>
+          <h2 id="stat-diff" style="color: #fbbf24; margin-top: 0.5rem; text-transform: uppercase;">-</h2>
+        </div>
+        <div class="card">
+          <span style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Server Status</span>
+          <h2 style="color: #38bdf8; margin-top: 0.5rem; font-size: 1.25rem;">ONLINE</h2>
+        </div>
+      </div>
+
+      <!-- Registered Users Management Table -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;">Platform User Registry</h3>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <p>VulnLab Notes Administrator Portal &bull; Port 8002 &bull; notes-idor-admin</p>
+  </footer>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

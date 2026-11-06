@@ -1,0 +1,92 @@
+[
+  {
+    "id": "notes-idor-view-easy",
+    "app": "notes-idor",
+    "title": "Notes - IDOR Note Access (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Access a private note belonging to the administrator by manipulating the sequential note identifier in the API request.",
+    "flag_env": "FLAG_NOTES_IDOR_VIEW_EASY",
+    "hints": [
+      "Log in as Alice (alice / alice123) and check the note IDs in the API responses or URL when viewing your own notes.",
+      "The note IDs are sequential integers (e.g. 3, 4). The first note created on the platform (ID 1) belongs to admin and contains sensitive data."
+    ]
+  },
+  {
+    "id": "notes-idor-view-medium",
+    "app": "notes-idor",
+    "title": "Notes - IDOR Note Access (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Bypass encoded or obfuscated note identifiers to view the administrator's confidential note.",
+    "flag_env": "FLAG_NOTES_IDOR_VIEW_MEDIUM",
+    "hints": [
+      "In Medium difficulty, examine the note IDs returned by GET /api/notes. They appear to be base64-encoded strings.",
+      "Base64-encode the integer 1 (i.e. 'MQ==') and request /api/notes/MQ==, or test query parameter overrides such as /api/notes/3?note_id=1."
+    ]
+  },
+  {
+    "id": "notes-idor-view-hard",
+    "app": "notes-idor",
+    "title": "Notes - IDOR Note Access (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Note IDs are UUIDs, but information disclosure in public activity or user profile endpoints leaks the admin's secret note identifier.",
+    "flag_env": "FLAG_NOTES_IDOR_VIEW_HARD",
+    "hints": [
+      "UUIDs cannot be enumerated sequentially. Look for information disclosure in other endpoints such as the audit log or user profile.",
+      "Inspect GET /api/activity or GET /api/users/admin/public-profile to locate the leaked note UUID, then request /api/notes/<UUID>."
+    ]
+  },
+  {
+    "id": "notes-idor-admin-easy",
+    "app": "notes-idor",
+    "title": "Notes - Privilege Escalation to Admin (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Escalate privileges to administrator via mass assignment in profile settings to read the admin flag.",
+    "flag_env": "FLAG_NOTES_IDOR_ADMIN_EASY",
+    "hints": [
+      "Look at the profile update endpoint at PUT /api/users/profile.",
+      "The server does not whitelist permitted fields. Send a JSON body containing {\"role\": \"admin\"} and check your updated privileges."
+    ]
+  },
+  {
+    "id": "notes-idor-admin-medium",
+    "app": "notes-idor",
+    "title": "Notes - Privilege Escalation to Admin (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Bypass role checks using HTTP header spoofing or method overrides to access the administrator dashboard.",
+    "flag_env": "FLAG_NOTES_IDOR_ADMIN_MEDIUM",
+    "hints": [
+      "Mass assignment is blocked on PUT /api/users/profile. How does the admin authorization check authenticate roles?",
+      "Try sending reverse-proxy style headers like X-Role: admin or X-User-Role: admin, or HTTP method override headers like X-HTTP-Method-Override: ADMIN."
+    ]
+  },
+  {
+    "id": "notes-idor-admin-hard",
+    "app": "notes-idor",
+    "title": "Notes - Privilege Escalation to Admin (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Abuse an IDOR in the user profile update endpoint or nested metadata to escalate privileges or modify the administrator account.",
+    "flag_env": "FLAG_NOTES_IDOR_ADMIN_HARD",
+    "hints": [
+      "Inspect the user management endpoint PUT /api/users/:id. Does it check whether you are updating your own ID or another user's ID?",
+      "Update user 1's password directly via PUT /api/users/1 with {\"password\": \"...\"}, or send nested metadata {\"metadata\": {\"role\": \"admin\"}}."
+    ]
+  }
+]
