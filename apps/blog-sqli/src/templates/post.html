@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - VulnLab Blog{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+  <a href="{{ url_for('index') }}" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Back to all posts</a>
+</div>
+
+<article class="card">
+  <div class="post-header">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <h2>{{ post.title }}</h2>
+      <span class="badge badge-{{ difficulty }}">Mode: {{ difficulty }}</span>
+    </div>
+    <div class="post-meta">
+      <span>Author: <strong>{{ post.author }}</strong></span>
+      <span>&bull;</span>
+      <span>Published: {{ post.created_at }}</span>
+      <span>&bull;</span>
+      <span>{{ post.views }} views</span>
+    </div>
+  </div>
+
+  <div class="post-body">
+    <p>{{ post.content }}</p>
+  </div>
+</article>
+
+<section class="card comments-section">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h3>Community Comments ({{ comments|length }})</h3>
+    <button onclick="triggerAdminBotReview({{ post.id }})" class="btn btn-accent" style="font-size: 0.85rem;">
+      🤖 Simulate Admin Reviewing Comments
+    </button>
+  </div>
+
+  <div style="margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-muted); background: #0f172a; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);">
+    {% if difficulty == 'easy' %}
+      <span style="color: #4ade80; font-weight: bold;">Easy XSS Filter:</span> Raw comment markup rendered directly (<code>| safe</code>). No HTML filtering applied.
+    {% elif difficulty == 'medium' %}
+      <span style="color: #fbbf24; font-weight: bold;">Medium XSS Filter:</span> Simple regex strips lowercase <code>&lt;script&gt;</code> tags. Try alternative tags or attributes!
+    {% elif difficulty == 'hard' %}
+      <span style="color: #f87171; font-weight: bold;">Hard XSS Filter:</span> Filters <code>&lt;script&gt;</code> and standard whitespace-delimited <code>onerror</code>/<code>onload</code> handlers. Try event handlers without whitespace or iframe contexts!
+    {% endif %}
+  </div>
+
+  <!-- Comments List -->
+  <div class="comments-list">
+    {% for c in comments %}
+      <div class="comment-card">
+        <div class="comment-meta">
+          <strong>{{ c.author_name }}</strong> commented on {{ c.created_at }}
+        </div>
+        <!-- VULNERABLE: Rendered as safe HTML to allow stored XSS execution -->
+        <div class="comment-content">
+          {{ c.content | safe }}
+        </div>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); font-style: italic;">No comments on this post yet. Be the first to comment!</p>
+    {% endfor %}
+  </div>
+
+  <!-- Post Comment Form -->
+  <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+    <h4>Leave a Comment</h4>
+    <form method="POST" action="{{ url_for('add_comment', post_id=post.id) }}" style="margin-top: 1rem;">
+      <div class="form-group">
+        <label for="author_name">Your Name / Handle</label>
+        <input type="text" id="author_name" name="author_name" class="form-control" placeholder="e.g. pentester_99" required value="guest">
+      </div>
+      <div class="form-group">
+        <label for="content">Comment Body</label>
+        <textarea id="content" name="content" class="form-control" placeholder="Write your comment or XSS payload here..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit Comment</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

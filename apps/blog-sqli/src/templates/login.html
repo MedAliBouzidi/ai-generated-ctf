@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - VulnLab Blog{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 2rem auto;">
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h2>Portal Login</h2>
+      <span class="badge badge-{{ difficulty }}">Mode: {{ difficulty }}</span>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-danger" style="margin-bottom: 1rem;">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="Enter username or SQLi payload" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+    </form>
+
+    <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem; font-size: 0.82rem; color: var(--text-muted);">
+      <p style="margin-bottom: 0.4rem; font-weight: 600; color: var(--text-secondary);">Active Challenge Context:</p>
+      {% if difficulty == 'easy' %}
+        <p><span style="color: #4ade80;">Easy:</span> Query is directly formatted. Classic SQLi payloads like <code>' OR 1=1--</code> or <code>admin'--</code> bypass the authentication check.</p>
+      {% elif difficulty == 'medium' %}
+        <p><span style="color: #fbbf24;">Medium:</span> WAF blocks common keywords <code>'OR'</code>, <code>'AND'</code>, and <code>'--'</code> comments. Try alternate comment styles or operators!</p>
+      {% elif difficulty == 'hard' %}
+        <p><span style="color: #f87171;">Hard:</span> WAF rejects all spaces and standard comment markers (<code>--</code>, <code>/*</code>, <code>#</code>). Use whitespace substitutes and boolean expressions!</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
