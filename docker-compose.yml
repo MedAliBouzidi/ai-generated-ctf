@@ -1,0 +1,281 @@
+# ==============================================================================
+# VulnLab CTF - Docker Compose Orchestration
+# ==============================================================================
+# Architecture & Safety Invariants:
+# 1. Host Port Binding: All container ports MUST be bound strictly to 127.0.0.1.
+# 2. Strict Network Isolation: Each app runs in its own dedicated Docker bridge.
+# 3. Scoreboard Isolation: Scoreboard has NO network connectivity to vulnerable apps.
+# 4. Storage Hardening: No host filesystem bind mounts; persistent data uses named volumes.
+# 5. Privileges: No container runs in privileged mode or has access to docker.sock.
+# 6. Resources: Every service is restricted to 0.50 CPU and 256MB memory.
+# ==============================================================================
+
+name: vulnlab-ctf
+
+services:
+  # ============================================================================
+  # Scoreboard Service (Port 8000)
+  # ============================================================================
+  scoreboard:
+    build:
+      context: ./scoreboard
+      dockerfile: Dockerfile
+    image: vulnlab-scoreboard:latest
+    container_name: vulnlab-scoreboard
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - vulnlab-scoreboard-net
+    volumes:
+      - scoreboard-data:/app/data
+    env_file:
+      - .env
+    environment:
+      - PORT=8000
+      - SCOREBOARD_SECRET=${SCOREBOARD_SECRET}
+      - DIFFICULTY=${DIFFICULTY:-easy}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    restart: unless-stopped
+
+  # ============================================================================
+  # App 1: Blog SQLi (Port 8001)
+  # ============================================================================
+  blog-sqli:
+    build:
+      context: ./apps/blog-sqli
+      dockerfile: Dockerfile
+    image: vulnlab-blog-sqli:latest
+    container_name: vulnlab-blog-sqli
+    ports:
+      - "127.0.0.1:8001:8001"
+    networks:
+      - vulnlab-blog-net
+    env_file:
+      - .env
+    environment:
+      - PORT=8001
+      - DIFFICULTY=${DIFFICULTY:-easy}
+      - BLOG_SQLI_DIFFICULTY=${BLOG_SQLI_DIFFICULTY:-${DIFFICULTY:-easy}}
+      - FLAG_BLOG_SQLI_LOGIN_EASY=${FLAG_BLOG_SQLI_LOGIN_EASY}
+      - FLAG_BLOG_SQLI_LOGIN_MEDIUM=${FLAG_BLOG_SQLI_LOGIN_MEDIUM}
+      - FLAG_BLOG_SQLI_LOGIN_HARD=${FLAG_BLOG_SQLI_LOGIN_HARD}
+      - FLAG_BLOG_SQLI_UNION_EASY=${FLAG_BLOG_SQLI_UNION_EASY}
+      - FLAG_BLOG_SQLI_UNION_MEDIUM=${FLAG_BLOG_SQLI_UNION_MEDIUM}
+      - FLAG_BLOG_SQLI_UNION_HARD=${FLAG_BLOG_SQLI_UNION_HARD}
+      - FLAG_BLOG_SQLI_XSS_EASY=${FLAG_BLOG_SQLI_XSS_EASY}
+      - FLAG_BLOG_SQLI_XSS_MEDIUM=${FLAG_BLOG_SQLI_XSS_MEDIUM}
+      - FLAG_BLOG_SQLI_XSS_HARD=${FLAG_BLOG_SQLI_XSS_HARD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    restart: unless-stopped
+
+  # ============================================================================
+  # App 2 - Database: Notes PostgreSQL DB (Internal Only - No Host Port)
+  # ============================================================================
+  notes-db:
+    image: postgres:16-alpine
+    container_name: vulnlab-notes-db
+    networks:
+      - vulnlab-notes-net
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-notes_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-notes_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-notes_db}
+    volumes:
+      - notes-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-notes_user} -d $${POSTGRES_DB:-notes_db}"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    restart: unless-stopped
+
+  # ============================================================================
+  # App 2: Notes IDOR (Port 8002)
+  # ============================================================================
+  notes-idor:
+    build:
+      context: ./apps/notes-idor
+      dockerfile: Dockerfile
+    image: vulnlab-notes-idor:latest
+    container_name: vulnlab-notes-idor
+    ports:
+      - "127.0.0.1:8002:8002"
+    networks:
+      - vulnlab-notes-net
+    depends_on:
+      notes-db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - PORT=8002
+      - DIFFICULTY=${DIFFICULTY:-easy}
+      - NOTES_IDOR_DIFFICULTY=${NOTES_IDOR_DIFFICULTY:-${DIFFICULTY:-easy}}
+      - DATABASE_URL=${DATABASE_URL:-postgres://notes_user:notes_pass@notes-db:5432/notes_db}
+      - FLAG_NOTES_IDOR_VIEW_EASY=${FLAG_NOTES_IDOR_VIEW_EASY}
+      - FLAG_NOTES_IDOR_VIEW_MEDIUM=${FLAG_NOTES_IDOR_VIEW_MEDIUM}
+      - FLAG_NOTES_IDOR_VIEW_HARD=${FLAG_NOTES_IDOR_VIEW_HARD}
+      - FLAG_NOTES_IDOR_ADMIN_EASY=${FLAG_NOTES_IDOR_ADMIN_EASY}
+      - FLAG_NOTES_IDOR_ADMIN_MEDIUM=${FLAG_NOTES_IDOR_ADMIN_MEDIUM}
+      - FLAG_NOTES_IDOR_ADMIN_HARD=${FLAG_NOTES_IDOR_ADMIN_HARD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    restart: unless-stopped
+
+  # ============================================================================
+  # App 3: File Share (Port 8003)
+  # ============================================================================
+  file-share:
+    build:
+      context: ./apps/file-share
+      dockerfile: Dockerfile
+    image: vulnlab-file-share:latest
+    container_name: vulnlab-file-share
+    ports:
+      - "127.0.0.1:8003:8003"
+    networks:
+      - vulnlab-files-net
+    volumes:
+      - file-share-data:/app/uploads
+    env_file:
+      - .env
+    environment:
+      - PORT=8003
+      - DIFFICULTY=${DIFFICULTY:-easy}
+      - FILE_SHARE_DIFFICULTY=${FILE_SHARE_DIFFICULTY:-${DIFFICULTY:-easy}}
+      - FLAG_FILE_SHARE_TRAVERSAL_EASY=${FLAG_FILE_SHARE_TRAVERSAL_EASY}
+      - FLAG_FILE_SHARE_TRAVERSAL_MEDIUM=${FLAG_FILE_SHARE_TRAVERSAL_MEDIUM}
+      - FLAG_FILE_SHARE_TRAVERSAL_HARD=${FLAG_FILE_SHARE_TRAVERSAL_HARD}
+      - FLAG_FILE_SHARE_UPLOAD_EASY=${FLAG_FILE_SHARE_UPLOAD_EASY}
+      - FLAG_FILE_SHARE_UPLOAD_MEDIUM=${FLAG_FILE_SHARE_UPLOAD_MEDIUM}
+      - FLAG_FILE_SHARE_UPLOAD_HARD=${FLAG_FILE_SHARE_UPLOAD_HARD}
+      - FLAG_FILE_SHARE_MIME_EASY=${FLAG_FILE_SHARE_MIME_EASY}
+      - FLAG_FILE_SHARE_MIME_MEDIUM=${FLAG_FILE_SHARE_MIME_MEDIUM}
+      - FLAG_FILE_SHARE_MIME_HARD=${FLAG_FILE_SHARE_MIME_HARD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    restart: unless-stopped
+
+  # ============================================================================
+  # App 4: Shop Auth (Port 8004)
+  # ============================================================================
+  shop-auth:
+    build:
+      context: ./apps/shop-auth
+      dockerfile: Dockerfile
+    image: vulnlab-shop-auth:latest
+    container_name: vulnlab-shop-auth
+    ports:
+      - "127.0.0.1:8004:8004"
+    networks:
+      - vulnlab-shop-net
+    env_file:
+      - .env
+    environment:
+      - PORT=8004
+      - DIFFICULTY=${DIFFICULTY:-easy}
+      - SHOP_AUTH_DIFFICULTY=${SHOP_AUTH_DIFFICULTY:-${DIFFICULTY:-easy}}
+      - FLAG_SHOP_AUTH_JWT_EASY=${FLAG_SHOP_AUTH_JWT_EASY}
+      - FLAG_SHOP_AUTH_JWT_MEDIUM=${FLAG_SHOP_AUTH_JWT_MEDIUM}
+      - FLAG_SHOP_AUTH_JWT_HARD=${FLAG_SHOP_AUTH_JWT_HARD}
+      - FLAG_SHOP_AUTH_BRUTEFORCE_EASY=${FLAG_SHOP_AUTH_BRUTEFORCE_EASY}
+      - FLAG_SHOP_AUTH_BRUTEFORCE_MEDIUM=${FLAG_SHOP_AUTH_BRUTEFORCE_MEDIUM}
+      - FLAG_SHOP_AUTH_BRUTEFORCE_HARD=${FLAG_SHOP_AUTH_BRUTEFORCE_HARD}
+      - FLAG_SHOP_AUTH_RESET_EASY=${FLAG_SHOP_AUTH_RESET_EASY}
+      - FLAG_SHOP_AUTH_RESET_MEDIUM=${FLAG_SHOP_AUTH_RESET_MEDIUM}
+      - FLAG_SHOP_AUTH_RESET_HARD=${FLAG_SHOP_AUTH_RESET_HARD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    restart: unless-stopped
+
+  # ============================================================================
+  # App 5: Ping Tool (Port 8005)
+  # ============================================================================
+  ping-tool:
+    build:
+      context: ./apps/ping-tool
+      dockerfile: Dockerfile
+    image: vulnlab-ping-tool:latest
+    container_name: vulnlab-ping-tool
+    ports:
+      - "127.0.0.1:8005:8005"
+    networks:
+      - vulnlab-ping-net
+    env_file:
+      - .env
+    environment:
+      - PORT=8005
+      - DIFFICULTY=${DIFFICULTY:-easy}
+      - PING_TOOL_DIFFICULTY=${PING_TOOL_DIFFICULTY:-${DIFFICULTY:-easy}}
+      - FLAG_PING_TOOL_RCE_EASY=${FLAG_PING_TOOL_RCE_EASY}
+      - FLAG_PING_TOOL_RCE_MEDIUM=${FLAG_PING_TOOL_RCE_MEDIUM}
+      - FLAG_PING_TOOL_RCE_HARD=${FLAG_PING_TOOL_RCE_HARD}
+      - FLAG_PING_TOOL_SSRF_EASY=${FLAG_PING_TOOL_SSRF_EASY}
+      - FLAG_PING_TOOL_SSRF_MEDIUM=${FLAG_PING_TOOL_SSRF_MEDIUM}
+      - FLAG_PING_TOOL_SSRF_HARD=${FLAG_PING_TOOL_SSRF_HARD}
+      - FLAG_PING_TOOL_XSS_EASY=${FLAG_PING_TOOL_XSS_EASY}
+      - FLAG_PING_TOOL_XSS_MEDIUM=${FLAG_PING_TOOL_XSS_MEDIUM}
+      - FLAG_PING_TOOL_XSS_HARD=${FLAG_PING_TOOL_XSS_HARD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    restart: unless-stopped
+
+# ==============================================================================
+# Isolated Networks (Zero Cross-App Network Paths)
+# ==============================================================================
+networks:
+  vulnlab-scoreboard-net:
+    name: vulnlab-scoreboard-net
+    driver: bridge
+  vulnlab-blog-net:
+    name: vulnlab-blog-net
+    driver: bridge
+  vulnlab-notes-net:
+    name: vulnlab-notes-net
+    driver: bridge
+  vulnlab-files-net:
+    name: vulnlab-files-net
+    driver: bridge
+  vulnlab-shop-net:
+    name: vulnlab-shop-net
+    driver: bridge
+  vulnlab-ping-net:
+    name: vulnlab-ping-net
+    driver: bridge
+
+# ==============================================================================
+# Persistent Named Volumes (No Host Bind Mounts)
+# ==============================================================================
+volumes:
+  scoreboard-data:
+    name: vulnlab-scoreboard-data
+  notes-db-data:
+    name: vulnlab-notes-db-data
+  file-share-data:
+    name: vulnlab-file-share-data
