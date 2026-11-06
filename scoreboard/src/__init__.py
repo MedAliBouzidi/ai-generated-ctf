@@ -1,0 +1,1 @@
+# VulnLab CTF Scoreboard Package

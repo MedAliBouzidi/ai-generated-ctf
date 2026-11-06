@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VulnLab CTF - Cyber Range Scoreboard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="header-container">
+      <div class="logo-area">
+        <span class="logo-icon">⚡</span>
+        <div class="logo-text">
+          <h1>VulnLab CTF</h1>
+          <p>Cyber Practice Range &bull; Port 8000</p>
+        </div>
+      </div>
+
+      <!-- Quick Links to Target Apps -->
+      <div class="app-links">
+        <a href="http://127.0.0.1:8001" target="_blank" rel="noopener noreferrer" class="app-pill" title="Blog SQLi">
+          <span>Blog SQLi</span> <span class="app-port">:8001</span> ↗
+        </a>
+        <a href="http://127.0.0.1:8002" target="_blank" rel="noopener noreferrer" class="app-pill" title="Notes IDOR">
+          <span>Notes IDOR</span> <span class="app-port">:8002</span> ↗
+        </a>
+        <a href="http://127.0.0.1:8003" target="_blank" rel="noopener noreferrer" class="app-pill" title="File Share">
+          <span>File Share</span> <span class="app-port">:8003</span> ↗
+        </a>
+        <a href="http://127.0.0.1:8004" target="_blank" rel="noopener noreferrer" class="app-pill" title="Shop Auth">
+          <span>Shop Auth</span> <span class="app-port">:8004</span> ↗
+        </a>
+        <a href="http://127.0.0.1:8005" target="_blank" rel="noopener noreferrer" class="app-pill" title="Ping Tool">
+          <span>Ping Tool</span> <span class="app-port">:8005</span> ↗
+        </a>
+      </div>
+
+      <!-- User Panel -->
+      <div class="user-panel">
+        <div id="player-card" class="player-card" style="display: none;">
+          <div class="player-info">
+            <span class="player-name" id="ui-player-name">Hacker</span>
+            <div class="player-stats">
+              <span class="player-score" id="ui-player-score">0 pts</span>
+              <span id="ui-player-rank">Unranked</span>
+              <span class="player-blood" id="ui-player-bloods">🩸 0</span>
+            </div>
+          </div>
+          <button class="btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" onclick="openRegisterModal()" title="Switch Account">Switch</button>
+        </div>
+        <button id="auth-prompt-btn" class="btn-primary" onclick="openRegisterModal()">
+          Register Handle
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" data-tab="challenges">
+      <span>🎯</span> Challenges
+    </button>
+    <button class="tab-btn" data-tab="leaderboard">
+      <span>🏆</span> Leaderboard
+    </button>
+    <button class="tab-btn" data-tab="rules">
+      <span>📜</span> Rules & Info
+    </button>
+    <button class="tab-btn" data-tab="admin">
+      <span>⚙️</span> Admin
+    </button>
+  </div>
+
+  <!-- Main Views Container -->
+  <main>
+
+    <!-- VIEW 1: Challenges View -->
+    <section id="view-challenges" class="view-section active">
+      <div class="controls-bar">
+        <div class="filters-group">
+          <select id="filter-app" class="filter-select">
+            <option value="all">All Apps (5)</option>
+            <option value="blog-sqli">Blog SQLi (:8001)</option>
+            <option value="notes-idor">Notes IDOR (:8002)</option>
+            <option value="file-share">File Share (:8003)</option>
+            <option value="shop-auth">Shop Auth (:8004)</option>
+            <option value="ping-tool">Ping Tool (:8005)</option>
+          </select>
+
+          <select id="filter-difficulty" class="filter-select">
+            <option value="all">All Difficulties</option>
+            <option value="easy">Easy (100 pts)</option>
+            <option value="medium">Medium (200 pts)</option>
+            <option value="hard">Hard (300 pts)</option>
+          </select>
+
+          <select id="filter-status" class="filter-select">
+            <option value="all">All Status</option>
+            <option value="unsolved">Unsolved</option>
+            <option value="solved">Solved</option>
+          </select>
+        </div>
+
+        <input type="text" id="search-input" class="search-input" placeholder="Search challenges, OWASP, category..." />
+      </div>
+
+      <!-- Challenges Grid -->
+      <div id="challenges-grid" class="challenges-grid">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+    </section>
+
+    <!-- VIEW 2: Leaderboard View -->
+    <section id="view-leaderboard" class="view-section">
+      <div class="controls-bar">
+        <div style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+          <span style="display: inline-block; width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green);"></span>
+          <span>Live Rankings &bull; Auto-refreshing</span>
+        </div>
+        <button class="btn-secondary" onclick="loadLeaderboard()">↻ Refresh Now</button>
+      </div>
+
+      <div class="leaderboard-card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 70px;">Rank</th>
+                <th>Player Handle</th>
+                <th>Total Score</th>
+                <th>Solves</th>
+                <th>First Bloods</th>
+                <th>Last Solve</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <!-- Rendered dynamically via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: Rules & Info View -->
+    <section id="view-rules" class="view-section">
+      <div class="info-card">
+        <h3>🏁 VulnLab CTF Rules of Engagement</h3>
+        <p>VulnLab CTF is an isolated educational cyber practice range. All services run strictly on <code>127.0.0.1</code> and have isolated bridge networks.</p>
+        <ul>
+          <li><strong>Flag Format:</strong> <code>VULNLAB{&lt;32_lowercase_hex_chars&gt;}</code></li>
+          <li><strong>Points Structure:</strong> Easy = <strong>100 pts</strong>, Medium = <strong>200 pts</strong>, Hard = <strong>300 pts</strong>.</li>
+          <li><strong>Hints Penalty:</strong> Each challenge features up to 2 hints. Unlocking a hint permanently deducts <strong>25% of points</strong> upon solve (Easy: -25 pts, Medium: -50 pts, Hard: -75 pts).</li>
+          <li><strong>First Blood:</strong> The first hacker to solve any challenge earns the 🩸 <strong>First Blood</strong> honor and badge.</li>
+          <li><strong>Rate Limiting:</strong> Maximum <strong>10 flag submissions per minute</strong> per player / IP to prevent automated brute-forcing.</li>
+          <li><strong>Zero Plaintext Storage:</strong> The scoreboard stores <em>only HMAC-SHA256 hashes</em> of flags, keyed with <code>SCOREBOARD_SECRET</code>. Plaintext flags are never saved to database or logs.</li>
+        </ul>
+      </div>
+
+      <div class="info-card">
+        <h3>🎯 Target Applications</h3>
+        <ul>
+          <li><strong>Blog SQLi (Port 8001):</strong> SQL injection vulnerabilities in login, union search, and stored comments.</li>
+          <li><strong>Notes IDOR (Port 8002):</strong> Insecure direct object references and role escalation flaws.</li>
+          <li><strong>File Share (Port 8003):</strong> Path traversal, arbitrary file upload, and MIME validation bypasses.</li>
+          <li><strong>Shop Auth (Port 8004):</strong> JWT alg-none confusion, brute force bypass, and predictable reset tokens.</li>
+          <li><strong>Ping Tool (Port 8005):</strong> Command injection, SSRF, and reflected XSS vulnerabilities.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- VIEW 4: Admin View -->
+    <section id="view-admin" class="view-section">
+      <div class="info-card">
+        <h3>⚙️ Scoreboard Administration</h3>
+        <p>Use the administrative reset tool to clear all player submissions, hints, and leaderboard standings without restarting Docker containers.</p>
+        <br>
+        <form id="admin-reset-form" style="max-width: 500px;">
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--text-primary);">
+              Admin Token (SCOREBOARD_SECRET):
+            </label>
+            <input type="password" id="admin-token-input" class="search-input" style="width: 100%;" placeholder="Enter SCOREBOARD_SECRET" required autocomplete="off" />
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="admin-reset-players" />
+              <span>Also delete registered player handles</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-danger">
+            Reset Scoreboard Data
+          </button>
+        </form>
+      </div>
+
+      <div class="info-card">
+        <h3>💻 API Admin Reset Command</h3>
+        <p>You can also reset the scoreboard programmatically via <code>curl</code>:</p>
+        <pre style="background: var(--bg-input); padding: 1rem; border-radius: 8px; margin-top: 0.5rem; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; border: 1px solid var(--border-color); color: var(--accent-cyan);">curl -X POST http://127.0.0.1:8000/api/admin/reset \
+  -H "X-Admin-Token: $SCOREBOARD_SECRET" \
+  -H "Content-Type: application/json"</pre>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal 1: Register Player Handle -->
+  <div id="register-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="modal-title">Enter Cyber Handle</h2>
+      <p class="modal-body">Choose a unique handle to track your solves, points, hints, and first-blood honors on the leaderboard.</p>
+      <form id="register-form">
+        <input type="text" id="register-username-input" class="search-input" style="width: 100%; margin-bottom: 1.25rem;" placeholder="e.g. cyber_ninja, zero_cool" required minlength="2" maxlength="30" autocomplete="off" />
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal('register-modal')">Cancel</button>
+          <button type="submit" class="btn-primary">Join Lab</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Hint Unlock Confirmation -->
+  <div id="hint-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="modal-title" id="hint-modal-title">Unlock Hint</h2>
+      <div class="modal-body" id="hint-modal-body">
+        <!-- Injected via app.js -->
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal('hint-modal')">Cancel</button>
+        <button type="button" class="btn-primary" onclick="confirmUnlockHint()">Unlock Hint</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Main JavaScript App -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

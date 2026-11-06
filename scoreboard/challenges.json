@@ -1,0 +1,632 @@
+[
+  {
+    "id": "blog-sqli-login-easy",
+    "app": "blog-sqli",
+    "title": "Blog - SQLi Login Bypass (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass authentication on the blog login form without knowing the administrator password using basic SQL injection.",
+    "flag_env": "FLAG_BLOG_SQLI_LOGIN_EASY",
+    "hints": [
+      "Check how username and password inputs are concatenated into the SQL statement.",
+      "SQL comment syntax '--' or '/*' can comment out the rest of the query."
+    ]
+  },
+  {
+    "id": "blog-sqli-login-medium",
+    "app": "blog-sqli",
+    "title": "Blog - SQLi Login Bypass (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass the blog login when standard SQL injection keywords or space characters are partially filtered or blacklisted.",
+    "flag_env": "FLAG_BLOG_SQLI_LOGIN_MEDIUM",
+    "hints": [
+      "Inspect the filter rules: is the application stripping keywords case-sensitively or using simple regex?",
+      "Consider using inline comments `/**/` or alternative whitespace characters if standard spaces are blocked."
+    ]
+  },
+  {
+    "id": "blog-sqli-login-hard",
+    "app": "blog-sqli",
+    "title": "Blog - SQLi Login Bypass (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass a hardened authentication barrier employing parameter sanitization, multi-word blocklists, and quote escaping.",
+    "flag_env": "FLAG_BLOG_SQLI_LOGIN_HARD",
+    "hints": [
+      "Look for secondary entry points or parameter pollution that alters query execution without triggering the blacklist.",
+      "Evaluate alternate encodings or non-standard SQL boolean expressions that remain valid SQLite syntax."
+    ]
+  },
+  {
+    "id": "blog-sqli-union-easy",
+    "app": "blog-sqli",
+    "title": "Blog - UNION Data Extraction (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Extract secret flag data from the blog database using a classic UNION-based SQL injection attack on the post search parameter.",
+    "flag_env": "FLAG_BLOG_SQLI_UNION_EASY",
+    "hints": [
+      "Determine the number of columns returned by the original query using 'ORDER BY n' or 'UNION SELECT NULL, ...'.",
+      "Locate which reflected column displays on screen, then query the flag table or configuration table."
+    ]
+  },
+  {
+    "id": "blog-sqli-union-medium",
+    "app": "blog-sqli",
+    "title": "Blog - UNION Data Extraction (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Perform UNION extraction when common keywords like 'UNION' or 'SELECT' are stripped by a single-pass filter.",
+    "flag_env": "FLAG_BLOG_SQLI_UNION_MEDIUM",
+    "hints": [
+      "If the application removes 'UNION' once, try nested keywords like 'UNIUNIONON'.",
+      "Check if mixed capitalization such as 'uNiOn sElEcT' bypasses a case-sensitive regex."
+    ]
+  },
+  {
+    "id": "blog-sqli-union-hard",
+    "app": "blog-sqli",
+    "title": "Blog - UNION Data Extraction (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Extract sensitive flag data when UNION queries are blocked or output is blind, requiring boolean-based or error-based extraction.",
+    "flag_env": "FLAG_BLOG_SQLI_UNION_HARD",
+    "hints": [
+      "Test conditional responses using SUBSTR(), INSTR(), or conditional CASE statements.",
+      "Automate character-by-character extraction to reconstruct the flag from blind boolean differentials."
+    ]
+  },
+  {
+    "id": "blog-sqli-xss-easy",
+    "app": "blog-sqli",
+    "title": "Blog - Stored XSS in Comments (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Inject an unescaped script tag into the public comment section that executes in visitor and administrator sessions.",
+    "flag_env": "FLAG_BLOG_SQLI_XSS_EASY",
+    "hints": [
+      "Submit basic HTML tags like `<script>alert(1)</script>` into the comment author or body fields.",
+      "Review the rendered DOM to see if the comment content is rendered raw without HTML entity encoding."
+    ]
+  },
+  {
+    "id": "blog-sqli-xss-medium",
+    "app": "blog-sqli",
+    "title": "Blog - Stored XSS in Comments (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass a naive comment filter that strips `<script>` tags to execute JavaScript and extract the secret token.",
+    "flag_env": "FLAG_BLOG_SQLI_XSS_MEDIUM",
+    "hints": [
+      "HTML event handlers like `<img src=x onerror=...>` or `<svg onload=...>` do not require explicit `<script>` tags.",
+      "Inspect whether attributes or nested tags allow JavaScript execution."
+    ]
+  },
+  {
+    "id": "blog-sqli-xss-hard",
+    "app": "blog-sqli",
+    "title": "Blog - Stored XSS in Comments (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Execute JavaScript stored in comments despite character blacklists, CSP restrictions, or attribute sanitization.",
+    "flag_env": "FLAG_BLOG_SQLI_XSS_HARD",
+    "hints": [
+      "Examine Content-Security-Policy headers or HTML sanitizers for gadget libraries or unsafe-inline directives.",
+      "Use alternative payload encodings or autofocus/onfocus vectors to trigger script execution."
+    ]
+  },
+  {
+    "id": "notes-idor-view-easy",
+    "app": "notes-idor",
+    "title": "Notes - IDOR Note Access (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Access private notes belonging to other users by manipulating sequential numerical identifiers in the API request.",
+    "flag_env": "FLAG_NOTES_IDOR_VIEW_EASY",
+    "hints": [
+      "Inspect the URL parameter when viewing a note (e.g., /api/notes/42 or ?id=1).",
+      "Increment or decrement the note ID to discover private notes belonging to the administrator."
+    ]
+  },
+  {
+    "id": "notes-idor-view-medium",
+    "app": "notes-idor",
+    "title": "Notes - IDOR Note Access (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Access restricted notes protected by client-side checks or disguised identifier formats.",
+    "flag_env": "FLAG_NOTES_IDOR_VIEW_MEDIUM",
+    "hints": [
+      "Check if note IDs are encoded (e.g., Base64, hex, or predictable hashes) rather than random UUIDs.",
+      "Ensure you send direct API requests rather than relying on UI link restrictions."
+    ]
+  },
+  {
+    "id": "notes-idor-view-hard",
+    "app": "notes-idor",
+    "title": "Notes - IDOR Note Access (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Retrieve unauthorized confidential notes through second-order IDOR or mass-assignment in search and export endpoints.",
+    "flag_env": "FLAG_NOTES_IDOR_VIEW_HARD",
+    "hints": [
+      "Investigate bulk export, note duplication, or search filter parameters for unauthenticated access.",
+      "Check if passing array parameters or JSON object manipulation exposes notes across tenant boundaries."
+    ]
+  },
+  {
+    "id": "notes-idor-admin-easy",
+    "app": "notes-idor",
+    "title": "Notes - Privilege Escalation to Admin (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Elevate your regular user account to administrator via an unprotected role parameter during profile update.",
+    "flag_env": "FLAG_NOTES_IDOR_ADMIN_EASY",
+    "hints": [
+      "Inspect the JSON payload sent when updating your user profile.",
+      "Add `\"role\": \"admin\"` or `\"is_admin\": true` to the profile update request."
+    ]
+  },
+  {
+    "id": "notes-idor-admin-medium",
+    "app": "notes-idor",
+    "title": "Notes - Privilege Escalation to Admin (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Bypass role protection on user management endpoints using parameter pollution or header overrides.",
+    "flag_env": "FLAG_NOTES_IDOR_ADMIN_MEDIUM",
+    "hints": [
+      "Check if administrative routes accept alternate HTTP methods (PUT vs POST vs PATCH).",
+      "Inspect custom headers such as `X-User-Role` or `X-Original-URL` that backend proxies might respect."
+    ]
+  },
+  {
+    "id": "notes-idor-admin-hard",
+    "app": "notes-idor",
+    "title": "Notes - Privilege Escalation to Admin (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Achieve administrative privileges by chaining prototype pollution or session tampering in note-sharing logic.",
+    "flag_env": "FLAG_NOTES_IDOR_ADMIN_HARD",
+    "hints": [
+      "Analyze how shared note permissions merge user objects in Node.js.",
+      "Look for JSON prototype pollution (`__proto__` / `constructor`) affecting authorization checks."
+    ]
+  },
+  {
+    "id": "file-share-traversal-easy",
+    "app": "file-share",
+    "title": "FileShare - Path Traversal (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Download unauthorized system files by traversing directories in the file download parameter.",
+    "flag_env": "FLAG_FILE_SHARE_TRAVERSAL_EASY",
+    "hints": [
+      "Test relative path sequences like `../../../../flag.txt` or `../../../../etc/passwd` in the filename parameter.",
+      "Analyze the error message if the file is not found to understand the storage root directory."
+    ]
+  },
+  {
+    "id": "file-share-traversal-medium",
+    "app": "file-share",
+    "title": "FileShare - Path Traversal (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Bypass simple path traversal sanitizers that strip single `../` strings or require specific file extensions.",
+    "flag_env": "FLAG_FILE_SHARE_TRAVERSAL_MEDIUM",
+    "hints": [
+      "Try nested traversal sequences such as `....//` or `..././` that reconstitute `../` after single-pass removal.",
+      "Test URL encoding (`%2e%2e%2f`) or double encoding (`%252e%252e%252f`)."
+    ]
+  },
+  {
+    "id": "file-share-traversal-hard",
+    "app": "file-share",
+    "title": "FileShare - Path Traversal (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Broken Access Control",
+    "owasp": "A01:2021-Broken Access Control",
+    "description": "Circumvent strict canonical path validation or prefix constraints to retrieve secret files.",
+    "flag_env": "FLAG_FILE_SHARE_TRAVERSAL_HARD",
+    "hints": [
+      "Check if the application verifies that the path starts with an allowed directory (e.g., `/uploads/`), and append traversal after it.",
+      "Explore null-byte termination or absolute path handling on Python `os.path.join` nuances."
+    ]
+  },
+  {
+    "id": "file-share-upload-easy",
+    "app": "file-share",
+    "title": "FileShare - Unrestricted File Upload (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Upload executable files directly to the server without file type or extension validation.",
+    "flag_env": "FLAG_FILE_SHARE_UPLOAD_EASY",
+    "hints": [
+      "Upload files with executable extensions or HTML/SVG files that can execute in context.",
+      "Check where uploaded files are stored and whether they are directly accessible."
+    ]
+  },
+  {
+    "id": "file-share-upload-medium",
+    "app": "file-share",
+    "title": "FileShare - Unrestricted File Upload (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass blacklisted extensions on file upload using alternative extensions or case variations.",
+    "flag_env": "FLAG_FILE_SHARE_UPLOAD_MEDIUM",
+    "hints": [
+      "If `.py` or `.html` is blocked, try `.pht`, `.htm`, or uppercase variants like `.Py`.",
+      "Check if the extension check splits only on the first or last period."
+    ]
+  },
+  {
+    "id": "file-share-upload-hard",
+    "app": "file-share",
+    "title": "FileShare - Unrestricted File Upload (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "SQL Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Achieve remote code execution or arbitrary file write via file upload with content inspection and extension filters.",
+    "flag_env": "FLAG_FILE_SHARE_UPLOAD_HARD",
+    "hints": [
+      "Test polyglot files that satisfy image header validation (magic bytes) while embedding executable code.",
+      "Look into filename path traversal during upload to overwrite application templates or configuration."
+    ]
+  },
+  {
+    "id": "file-share-mime-easy",
+    "app": "file-share",
+    "title": "FileShare - Weak MIME Validation (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Insecure Design",
+    "owasp": "A04:2021-Insecure Design",
+    "description": "Bypass client-side MIME checks by tampering with the Content-Type header in the upload request.",
+    "flag_env": "FLAG_FILE_SHARE_MIME_EASY",
+    "hints": [
+      "Inspect the HTTP multipart request when uploading a file.",
+      "Modify the `Content-Type: text/plain` header to `image/png` or `image/jpeg` to satisfy server validation."
+    ]
+  },
+  {
+    "id": "file-share-mime-medium",
+    "app": "file-share",
+    "title": "FileShare - Weak MIME Validation (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Insecure Design",
+    "owasp": "A04:2021-Insecure Design",
+    "description": "Bypass server MIME sniffing by prepending valid file signatures (magic bytes) to unauthorized files.",
+    "flag_env": "FLAG_FILE_SHARE_MIME_MEDIUM",
+    "hints": [
+      "Add magic bytes for a GIF (`GIF89a;`) or PNG (`\\x89PNG\\r\\n\\x1a\\n`) at the start of your payload.",
+      "Verify that the MIME detector reads only the first few bytes while the parser executes the full content."
+    ]
+  },
+  {
+    "id": "file-share-mime-hard",
+    "app": "file-share",
+    "title": "FileShare - Weak MIME Validation (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Insecure Design",
+    "owasp": "A04:2021-Insecure Design",
+    "description": "Exploit image processing parser quirks or SVG XML entities to bypass comprehensive MIME validation.",
+    "flag_env": "FLAG_FILE_SHARE_MIME_HARD",
+    "hints": [
+      "Test SVG images with embedded XML External Entity (XXE) or script directives.",
+      "Examine how PIL/Pillow or file-type libraries handle multi-stream or corrupted image containers."
+    ]
+  },
+  {
+    "id": "shop-auth-jwt-easy",
+    "app": "shop-auth",
+    "title": "Shop - Weak JWT None Algorithm (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Forge an administrative authentication token by exploiting the JWT 'none' algorithm flaw.",
+    "flag_env": "FLAG_SHOP_AUTH_JWT_EASY",
+    "hints": [
+      "Decode the JWT header and payload (base64url).",
+      "Change the header algorithm `\"alg\": \"HS256\"` to `\"none\"` (or `\"None\"`), modify user claims, and remove the signature."
+    ]
+  },
+  {
+    "id": "shop-auth-jwt-medium",
+    "app": "shop-auth",
+    "title": "Shop - Weak JWT Secret Brute Force (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Crack a weak, dictionary-based HMAC secret key used to sign session JWTs and forge an admin token.",
+    "flag_env": "FLAG_SHOP_AUTH_JWT_MEDIUM",
+    "hints": [
+      "Extract the session JWT from cookies or headers and use a tool or script to test common passwords.",
+      "Once cracked, sign a modified JWT with `\"role\": \"admin\"` using the discovered secret."
+    ]
+  },
+  {
+    "id": "shop-auth-jwt-hard",
+    "app": "shop-auth",
+    "title": "Shop - Weak JWT Header Parameter Confusion (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Exploit JWT header injection (e.g., `jwk`, `jku`, or `kid` path traversal) to verify forged tokens.",
+    "flag_env": "FLAG_SHOP_AUTH_JWT_HARD",
+    "hints": [
+      "Inspect if the JWT verification checks the `kid` (Key ID) header parameter against a local file.",
+      "Point `kid` to an empty file or known static file (`/dev/null`), signing with an empty secret."
+    ]
+  },
+  {
+    "id": "shop-auth-bruteforce-easy",
+    "app": "shop-auth",
+    "title": "Shop - No Login Rate Limiting (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Brute-force user credentials on the login endpoint due to absent rate limiting or lockout protections.",
+    "flag_env": "FLAG_SHOP_AUTH_BRUTEFORCE_EASY",
+    "hints": [
+      "Observe that the login endpoint does not enforce delays or account lockouts upon consecutive failures.",
+      "Run a credential stuffing script with a common wordlist against the admin account."
+    ]
+  },
+  {
+    "id": "shop-auth-bruteforce-medium",
+    "app": "shop-auth",
+    "title": "Shop - Header-Bypass Rate Limiting (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Bypass IP-based rate limiting on login attempts by spoofing client IP header values.",
+    "flag_env": "FLAG_SHOP_AUTH_BRUTEFORCE_MEDIUM",
+    "hints": [
+      "Inspect proxy headers like `X-Forwarded-For`, `X-Real-IP`, or `Client-IP`.",
+      "Rotate the spoofed IP address in each request to reset the rate limiting bucket."
+    ]
+  },
+  {
+    "id": "shop-auth-bruteforce-hard",
+    "app": "shop-auth",
+    "title": "Shop - Timing/Response Attack (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Enumerate valid usernames and exploit subtle response differences or timing attacks to compromise credentials.",
+    "flag_env": "FLAG_SHOP_AUTH_BRUTEFORCE_HARD",
+    "hints": [
+      "Measure response times or status code nuances between valid and invalid usernames.",
+      "Leverage password reset or registration error messages to confirm target accounts before targeted attacks."
+    ]
+  },
+  {
+    "id": "shop-auth-reset-easy",
+    "app": "shop-auth",
+    "title": "Shop - Predictable Reset Token MD5 (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Predict password reset tokens generated from weak cryptographic primitives such as unsalted MD5 of username.",
+    "flag_env": "FLAG_SHOP_AUTH_RESET_EASY",
+    "hints": [
+      "Request a password reset for your own test account and examine the reset token structure.",
+      "Check if the token matches `md5(username)` or `md5(email)`."
+    ]
+  },
+  {
+    "id": "shop-auth-reset-medium",
+    "app": "shop-auth",
+    "title": "Shop - Predictable Reset Timestamp (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Crack password reset tokens derived from predictable server epoch timestamps.",
+    "flag_env": "FLAG_SHOP_AUTH_RESET_MEDIUM",
+    "hints": [
+      "Analyze token entropy; does it vary strictly according to the Unix epoch second of the request?",
+      "Record server response headers (`Date`) and brute-force the narrow timestamp window."
+    ]
+  },
+  {
+    "id": "shop-auth-reset-hard",
+    "app": "shop-auth",
+    "title": "Shop - Host Header Poisoning Reset (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Identification and Authentication Failures",
+    "owasp": "A07:2021-Identification and Authentication Failures",
+    "description": "Poison password reset links by manipulating the HTTP Host or X-Forwarded-Host header to intercept tokens.",
+    "flag_env": "FLAG_SHOP_AUTH_RESET_HARD",
+    "hints": [
+      "Provide a custom `Host` or `X-Forwarded-Host` header when requesting a password reset for the admin.",
+      "Verify whether the reset link sent to the user contains your controlled attacker domain."
+    ]
+  },
+  {
+    "id": "ping-tool-rce-easy",
+    "app": "ping-tool",
+    "title": "PingTool - Unsanitized Command Injection (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Command Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Execute arbitrary OS commands on the ping utility via unescaped shell concatenation.",
+    "flag_env": "FLAG_PING_TOOL_RCE_EASY",
+    "hints": [
+      "Append shell command separators such as `;`, `&&`, or `|` after the target IP.",
+      "Execute commands like `; cat /flag.txt` or `; id` to read the challenge flag."
+    ]
+  },
+  {
+    "id": "ping-tool-rce-medium",
+    "app": "ping-tool",
+    "title": "PingTool - Filter-Bypass Command Injection (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Command Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass a command injection filter that blacklists standard shell metacharacters like `;` and `&`.",
+    "flag_env": "FLAG_PING_TOOL_RCE_MEDIUM",
+    "hints": [
+      "Test newline characters (`%0a` or `\\n`) or command substitution syntax like `$(...)` or backticks `` `...` ``.",
+      "Check if pipeline `|` or redirection `<` can execute commands without semicolons."
+    ]
+  },
+  {
+    "id": "ping-tool-rce-hard",
+    "app": "ping-tool",
+    "title": "PingTool - Whitespace/Binary Bypass Command Injection (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Command Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Execute shell commands under strict filters forbidding spaces, slashes, and common executable names.",
+    "flag_env": "FLAG_PING_TOOL_RCE_HARD",
+    "hints": [
+      "Use shell environment variables like `${IFS}` to substitute for whitespace.",
+      "Use wildcard expansion (`/???/c??` for `/bin/cat`) or base64 decoding to bypass keyword filters."
+    ]
+  },
+  {
+    "id": "ping-tool-ssrf-easy",
+    "app": "ping-tool",
+    "title": "PingTool - Unrestricted SSRF (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Server-Side Request Forgery",
+    "owasp": "A10:2021-Server-Side Request Forgery",
+    "description": "Reach internal network endpoints and services through the unvalidated HTTP health check feature.",
+    "flag_env": "FLAG_PING_TOOL_SSRF_EASY",
+    "hints": [
+      "Submit loopback or internal addresses like `http://127.0.0.1:8000/` or `http://localhost:5000/`.",
+      "Explore internal admin endpoints or cloud metadata services reachable from the container."
+    ]
+  },
+  {
+    "id": "ping-tool-ssrf-medium",
+    "app": "ping-tool",
+    "title": "PingTool - SSRF Localhost Filter Bypass (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Server-Side Request Forgery",
+    "owasp": "A10:2021-Server-Side Request Forgery",
+    "description": "Bypass basic regex filters blocking the literal strings 'localhost' and '127.0.0.1'.",
+    "flag_env": "FLAG_PING_TOOL_SSRF_MEDIUM",
+    "hints": [
+      "Use alternative IP notations for 127.0.0.1 such as decimal (`2130706433`), octal (`0177.0.0.1`), or hex (`0x7f000001`).",
+      "Test shorthand IP formats like `127.1` or IPv6 loopback `[::1]`."
+    ]
+  },
+  {
+    "id": "ping-tool-ssrf-hard",
+    "app": "ping-tool",
+    "title": "PingTool - SSRF CIDR/Hex/Redirect Bypass (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Server-Side Request Forgery",
+    "owasp": "A10:2021-Server-Side Request Forgery",
+    "description": "Bypass DNS resolution checks and private CIDR blacklists using HTTP open redirects or DNS rebinding.",
+    "flag_env": "FLAG_PING_TOOL_SSRF_HARD",
+    "hints": [
+      "Point the health check to an external server you control that issues an HTTP 302 redirect to `http://127.0.0.1/`.",
+      "Inspect if the HTTP client follows redirects without re-checking the destination IP against the blacklist."
+    ]
+  },
+  {
+    "id": "ping-tool-xss-easy",
+    "app": "ping-tool",
+    "title": "PingTool - Reflected XSS (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Trigger reflected cross-site scripting through the unescaped host parameter displayed in ping output.",
+    "flag_env": "FLAG_PING_TOOL_XSS_EASY",
+    "hints": [
+      "Inject `<script>alert(1)</script>` into the target host input.",
+      "Check how the ping results page reflects user input directly into the HTML document."
+    ]
+  },
+  {
+    "id": "ping-tool-xss-medium",
+    "app": "ping-tool",
+    "title": "PingTool - Reflected XSS Tag Filter Bypass (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass a tag filter that removes `<script>` tags by utilizing event handlers and alternate HTML elements.",
+    "flag_env": "FLAG_PING_TOOL_XSS_MEDIUM",
+    "hints": [
+      "Use tags like `<img src=x onerror=alert(1)>` or `<svg onload=alert(1)>`.",
+      "Test case variation or double tags if the filter only strips single occurrences."
+    ]
+  },
+  {
+    "id": "ping-tool-xss-hard",
+    "app": "ping-tool",
+    "title": "PingTool - Context-Breaking Reflected XSS (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Break out of JavaScript string literals or attribute contexts when input is reflected inside an existing script block.",
+    "flag_env": "FLAG_PING_TOOL_XSS_HARD",
+    "hints": [
+      "Look at where the host parameter is embedded inside `<script>` or attribute quotes.",
+      "Escape the string using `\"-alert(1)-\"` or `</script><script>...` to execute JavaScript."
+    ]
+  }
+]
