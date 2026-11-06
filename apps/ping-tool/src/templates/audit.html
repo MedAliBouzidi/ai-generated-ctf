@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}NetPulse // Security Audit Logs ({{ difficulty | upper }}){% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero-banner">
+        <div class="hero-content">
+            <h1 class="hero-title">Diagnostic Security Audit Logs</h1>
+            <p class="hero-desc">
+                Centralized audit trail tracking all ICMP probes, SSRF requests, and telemetry lookups dispatched across internal networks.
+            </p>
+        </div>
+        <div class="hero-meta">
+            <div class="meta-item">
+                <span class="meta-label">Audit Scope</span>
+                <span class="meta-value badge-{{ difficulty }}">ROLE: ADMINISTRATOR</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">REST API</span>
+                <span class="meta-value"><a href="{{ url_for('api_audit_logs') }}" target="_blank" class="text-cyan">/api/audit/logs</a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-card">
+        <div class="panel-header">
+            <h2>Audit Query Filter</h2>
+            <span class="tag-vuln">Vulnerability: ping-tool-xss ({{ difficulty }})</span>
+        </div>
+
+        <form action="{{ url_for('audit_view') }}" method="GET" class="diag-form">
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label for="auditSearch">Filter Diagnostic Event Logs</label>
+                    <input type="text" id="auditSearch" name="search" class="input-text" placeholder="Search event or keyword..." value="{{ search or '' }}">
+                </div>
+                <div class="form-group btn-col">
+                    <button type="submit" class="btn btn-primary">Filter Logs</button>
+                </div>
+            </div>
+        </form>
+
+        {% if error_reflection is not None and error_reflection != "" %}
+        <div class="alert alert-info">
+            <span class="alert-icon">ℹ️</span>
+            <div>
+                <strong>Active Query Filter:</strong>
+                <span>Showing results matching: </span>
+                <span class="xss-target">{{ error_reflection | safe }}</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if difficulty == 'hard' and js_context_reflection %}
+        <script>
+            // Hard XSS: Search telemetry tracking variable
+            try {
+                let currentAuditFilter = "{{ js_context_reflection }}";
+                console.log("Active audit filter applied: " + currentAuditFilter);
+            } catch(e) {
+                console.error("Filter telemetry execution: ", e);
+            }
+        </script>
+        {% endif %}
+
+        <!-- Audit Records Table -->
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp</th>
+                        <th>Operator</th>
+                        <th>Service Daemon</th>
+                        <th>Action Performed</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#1001</td>
+                        <td>2026-11-06 22:15:02</td>
+                        <td><span class="badge-user">admin</span></td>
+                        <td><code>ping-daemon</code></td>
+                        <td>PING 10.0.0.1 (count=2)</td>
+                        <td><span class="status-pill status-ok">SUCCESS</span></td>
+                    </tr>
+                    <tr>
+                        <td>#1002</td>
+                        <td>2026-11-06 22:18:41</td>
+                        <td><span class="badge-user">system</span></td>
+                        <td><code>ssrf-health-agent</code></td>
+                        <td>PROBE internal-control-plane</td>
+                        <td><span class="status-pill status-ok">SUCCESS</span></td>
+                    </tr>
+                    <tr>
+                        <td>#1003</td>
+                        <td>2026-11-06 22:20:19</td>
+                        <td><span class="badge-user">admin</span></td>
+                        <td><code>dns-resolver</code></td>
+                        <td>LOOKUP gateway.internal</td>
+                        <td><span class="status-pill status-ok">SUCCESS</span></td>
+                    </tr>
+                    {% if search %}
+                    <tr>
+                        <td>#1004</td>
+                        <td>2026-11-06 22:25:33</td>
+                        <td><span class="badge-user">admin</span></td>
+                        <td><code>audit-inspector</code></td>
+                        <td>FILTER QUERY: {{ search | truncate(30) }}</td>
+                        <td><span class="status-pill status-warn">FILTERED</span></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="admin-session-box">
+            <h4>Administrative Session Details</h4>
+            <p class="text-sm">
+                Administrative session cookie <code>admin_session</code> has been assigned to this browser session.
+                Exploit Reflected XSS to extract this token or query <a href="{{ url_for('api_audit_logs') }}" target="_blank" class="text-cyan"><code>/api/audit/logs</code></a>.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}NetPulse // Diagnostics Suite ({{ difficulty | upper }}){% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero / Status Banner -->
+    <div class="hero-banner">
+        <div class="hero-content">
+            <h1 class="hero-title">Network Diagnostics & Telemetry Hub</h1>
+            <p class="hero-desc">
+                High-performance network probing suite for infrastructure testing, latency validation, and external reachability checks.
+            </p>
+        </div>
+        <div class="hero-meta">
+            <div class="meta-item">
+                <span class="meta-label">Active Mode</span>
+                <span class="meta-value badge-{{ difficulty }}">{{ difficulty | upper }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Internal Node</span>
+                <span class="meta-value">127.0.0.1:8005</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Flag Target</span>
+                <span class="meta-value font-mono">/app/flags/flag_rce.txt</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diagnostic Tabs Navigation -->
+    <div class="tabs-nav">
+        <button class="tab-btn {% if active_tab != 'lookup' %}active{% endif %}" data-tab="tab-ping">
+            <span class="tab-icon">📶</span> ICMP Ping Probe
+        </button>
+        <button class="tab-btn" data-tab="tab-ssrf">
+            <span class="tab-icon">🌐</span> HTTP Health / URL Preview
+        </button>
+        <button class="tab-btn {% if active_tab == 'lookup' %}active{% endif %}" data-tab="tab-lookup">
+            <span class="tab-icon">🔍</span> Host / DNS Inspector
+        </button>
+        <button class="tab-btn" data-tab="tab-bot">
+            <span class="tab-icon">🤖</span> Admin Bot Simulator
+        </button>
+    </div>
+
+    <!-- TAB 1: Ping Command Injection -->
+    <div class="tab-content {% if active_tab != 'lookup' %}active{% endif %}" id="tab-ping">
+        <div class="panel-card">
+            <div class="panel-header">
+                <h2>ICMP Ping Diagnostic Utility</h2>
+                <span class="tag-vuln">Vulnerability: ping-tool-rce ({{ difficulty }})</span>
+            </div>
+            <p class="panel-desc">
+                Executes standard ICMP echo requests against a specified target destination.
+            </p>
+
+            <form id="pingForm" class="diag-form">
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="pingHost">Destination Host / IP Address</label>
+                        <input type="text" id="pingHost" name="host" class="input-text" placeholder="e.g. 127.0.0.1 or 8.8.8.8" value="127.0.0.1" required>
+                    </div>
+                    <div class="form-group w-32">
+                        <label for="pingCount">Echo Count</label>
+                        <select id="pingCount" name="count" class="input-select">
+                            <option value="1">1 packet</option>
+                            <option value="2" selected>2 packets</option>
+                            <option value="4">4 packets</option>
+                        </select>
+                    </div>
+                    <div class="form-group btn-col">
+                        <button type="submit" id="pingSubmitBtn" class="btn btn-primary">
+                            <span class="btn-spinner hidden"></span> Send Ping
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Difficulty Defense Notice -->
+            <div class="defense-notice">
+                <span class="notice-icon">🛡️</span>
+                <div class="notice-body">
+                    <strong>Current Filter Rule ({{ difficulty | upper }}):</strong>
+                    {% if difficulty == 'easy' %}
+                    <span>Unsanitized execution with <code>shell=True</code>. Raw string concatenation.</span>
+                    {% elif difficulty == 'medium' %}
+                    <span>Blacklisting characters: <code>;</code>, <code>&&</code>, <code>|</code>.</span>
+                    {% else %}
+                    <span>Strict blacklists: spaces, <code>;</code>, <code>&</code>, <code>|</code>, and binaries <code>cat</code>, <code>sh</code>, <code>bash</code>.</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Terminal Output Window -->
+            <div class="terminal-window">
+                <div class="terminal-bar">
+                    <div class="terminal-dots">
+                        <span class="dot-red"></span>
+                        <span class="dot-yellow"></span>
+                        <span class="dot-green"></span>
+                    </div>
+                    <span class="terminal-title">console output &bull; /bin/sh</span>
+                </div>
+                <pre id="pingOutput" class="terminal-body">$ Ready. Enter target host above and execute probe.</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SSRF Tool -->
+    <div class="tab-content" id="tab-ssrf">
+        <div class="panel-card">
+            <div class="panel-header">
+                <h2>HTTP Health & URL Preview Tool</h2>
+                <span class="tag-vuln">Vulnerability: ping-tool-ssrf ({{ difficulty }})</span>
+            </div>
+            <p class="panel-desc">
+                Tests remote web server reachability, retrieves HTTP headers, and fetches content previews.
+            </p>
+
+            <form id="ssrfForm" class="diag-form">
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="ssrfUrl">Target HTTP/HTTPS URL</label>
+                        <input type="text" id="ssrfUrl" name="url" class="input-text" placeholder="e.g. http://127.0.0.1:8005/internal/status" required>
+                    </div>
+                    <div class="form-group btn-col">
+                        <button type="submit" id="ssrfSubmitBtn" class="btn btn-primary">
+                            <span class="btn-spinner hidden"></span> Inspect Target
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="defense-notice">
+                <span class="notice-icon">🔒</span>
+                <div class="notice-body">
+                    <strong>Target Internal Service:</strong>
+                    <span>Private control plane located at <code>http://127.0.0.1:8005/internal/status</code> (loopback restricted).</span>
+                    <br>
+                    <strong>Current SSRF Filter ({{ difficulty | upper }}):</strong>
+                    {% if difficulty == 'easy' %}
+                    <span>Unrestricted: server requests any URL without validation.</span>
+                    {% elif difficulty == 'medium' %}
+                    <span>Blacklists strings <code>localhost</code> and <code>127.0.0.1</code>.</span>
+                    {% else %}
+                    <span>Resolves hostname to IP and validates CIDR (blocking 127.0.0.1/32). Built-in redirector available at <code>/api/redirect?url=...</code>.</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- HTTP Response Preview Window -->
+            <div class="terminal-window">
+                <div class="terminal-bar">
+                    <div class="terminal-dots">
+                        <span class="dot-red"></span>
+                        <span class="dot-yellow"></span>
+                        <span class="dot-green"></span>
+                    </div>
+                    <span class="terminal-title">HTTP Response Preview</span>
+                </div>
+                <div id="ssrfResponse" class="terminal-body font-mono">
+                    Awaiting request. Enter URL above to inspect response.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: Host / DNS Lookup (Reflected XSS) -->
+    <div class="tab-content {% if active_tab == 'lookup' %}active{% endif %}" id="tab-lookup">
+        <div class="panel-card">
+            <div class="panel-header">
+                <h2>Host & DNS Resolution Inspector</h2>
+                <span class="tag-vuln">Vulnerability: ping-tool-xss ({{ difficulty }})</span>
+            </div>
+            <p class="panel-desc">
+                Queries DNS records and performs PTR/A resolution for network hostnames.
+            </p>
+
+            <form action="{{ url_for('host_lookup') }}" method="GET" class="diag-form">
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="lookupHost">Hostname / Domain</label>
+                        <input type="text" id="lookupHost" name="host" class="input-text" placeholder="e.g. gateway.internal or <script>alert(1)</script>" value="{{ queried_host or '' }}" required>
+                    </div>
+                    <div class="form-group btn-col">
+                        <button type="submit" class="btn btn-primary">Lookup Host</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="defense-notice">
+                <span class="notice-icon">🔍</span>
+                <div class="notice-body">
+                    <strong>Reflected Error Filter ({{ difficulty | upper }}):</strong>
+                    {% if difficulty == 'easy' %}
+                    <span>Raw unsanitized reflection with <code>| safe</code> in HTML template.</span>
+                    {% elif difficulty == 'medium' %}
+                    <span>Strips lowercase <code>&lt;script&gt;</code> once. Bypassable with uppercase tags or event-driven tags.</span>
+                    {% else %}
+                    <span>Angle brackets (<code>&lt;</code>, <code>&gt;</code>) are escaped, but input is reflected directly inside an inline JavaScript string context.</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if lookup_success %}
+            <div class="alert alert-success">
+                <span class="alert-icon">✓</span>
+                <span><strong>Lookup Successful:</strong> {{ lookup_result }}</span>
+            </div>
+            {% endif %}
+
+            {% if error_reflection is not None %}
+            <div class="alert alert-error">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Lookup Failure:</strong>
+                    <span>Host resolution failed for: </span>
+                    <!-- Reflected XSS injection point -->
+                    <span class="xss-target">{{ error_reflection | safe }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if difficulty == 'hard' and js_context_reflection %}
+            <!-- Hard Difficulty: Inline JavaScript context breakout -->
+            <div class="panel-subcard">
+                <h3>Diagnostic Telemetry Client Context</h3>
+                <p class="text-sm">Client script context initialized with target host:</p>
+                <pre class="code-snippet font-mono">&lt;script&gt;
+    let lastQueriedHost = "{{ js_context_reflection }}";
+    console.log("Telemetry updated: " + lastQueriedHost);
+&lt;/script&gt;</pre>
+            </div>
+            <script>
+                // Hard Difficulty XSS Reflection Point
+                try {
+                    let lastQueriedHost = "{{ js_context_reflection }}";
+                    console.log("Diagnostic telemetry active for host: " + lastQueriedHost);
+                } catch(e) {
+                    console.error("Telemetry script execution error: ", e);
+                }
+            </script>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TAB 4: Admin Bot Simulator -->
+    <div class="tab-content" id="tab-bot">
+        <div class="panel-card">
+            <div class="panel-header">
+                <h2>Simulated Administrator Bot & Review</h2>
+                <span class="tag-badge">Automated Auditor</span>
+            </div>
+            <p class="panel-desc">
+                Submit a diagnostic lookup URL to have an administrative crawler review the report with active session credentials.
+            </p>
+
+            <form id="botForm" class="diag-form">
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="botUrl">Diagnostic Report URL</label>
+                        <input type="text" id="botUrl" name="url" class="input-text" placeholder="http://127.0.0.1:8005/lookup?host=%3Cscript%3Ealert(1)%3C/script%3E" required>
+                    </div>
+                    <div class="form-group btn-col">
+                        <button type="submit" id="botSubmitBtn" class="btn btn-accent">
+                            <span class="btn-spinner hidden"></span> Dispatch Admin Bot
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="terminal-window">
+                <div class="terminal-bar">
+                    <div class="terminal-dots">
+                        <span class="dot-red"></span>
+                        <span class="dot-yellow"></span>
+                        <span class="dot-green"></span>
+                    </div>
+                    <span class="terminal-title">Admin Bot Execution Log</span>
+                </div>
+                <div id="botOutput" class="terminal-body font-mono">
+                    Ready. Submit diagnostic report URL to simulate administrator visit.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

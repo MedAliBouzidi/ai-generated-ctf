@@ -1,0 +1,137 @@
+[
+  {
+    "id": "ping-tool-rce-easy",
+    "app": "ping-tool",
+    "title": "PingTool - Unsanitized Command Injection (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Command Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Execute arbitrary system commands via unsanitized host parameter in the Ping diagnostic utility to read /app/flags/flag_rce.txt.",
+    "flag_env": "FLAG_PING_TOOL_RCE_EASY",
+    "hints": [
+      "The ping utility invokes the system ping binary using a shell without sanitizing the target host.",
+      "Use standard command chaining operators such as ';' to execute additional shell commands."
+    ]
+  },
+  {
+    "id": "ping-tool-rce-medium",
+    "app": "ping-tool",
+    "title": "PingTool - Filter-Bypass Command Injection (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Command Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass character blacklists (;, &&, |) in the ping utility to execute system commands and read the medium flag.",
+    "flag_env": "FLAG_PING_TOOL_RCE_MEDIUM",
+    "hints": [
+      "Common command delimiters like ';', '&&', and '|' are blocked by a keyword filter.",
+      "Notice that newlines (%0a or \\n), backticks (`...`), and command substitution $(...) can execute commands without blacklisted characters."
+    ]
+  },
+  {
+    "id": "ping-tool-rce-hard",
+    "app": "ping-tool",
+    "title": "PingTool - Whitespace/Binary Bypass Command Injection (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Command Injection",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass strict whitespace and command binary blacklists (blocking spaces, ;, &, |, cat, sh, bash) to read the hard flag.",
+    "flag_env": "FLAG_PING_TOOL_RCE_HARD",
+    "hints": [
+      "Whitespace and common binaries (cat, sh, bash) are filtered out.",
+      "Use internal shell whitespace variables like $IFS or ${IFS}, and substitute 'cat' with tools like 'head', 'tail', 'nl', or input redirection '<'."
+    ]
+  },
+  {
+    "id": "ping-tool-ssrf-easy",
+    "app": "ping-tool",
+    "title": "PingTool - Unrestricted SSRF (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Server-Side Request Forgery",
+    "owasp": "A10:2021-Server-Side Request Forgery",
+    "description": "Use the HTTP Health / URL preview tool to reach the internal status endpoint http://127.0.0.1:8005/internal/status and extract the easy SSRF flag.",
+    "flag_env": "FLAG_PING_TOOL_SSRF_EASY",
+    "hints": [
+      "The preview tool performs HTTP requests directly from the web application server.",
+      "Accessing http://127.0.0.1:8005/internal/status from the server bypasses external loopback restrictions."
+    ]
+  },
+  {
+    "id": "ping-tool-ssrf-medium",
+    "app": "ping-tool",
+    "title": "PingTool - SSRF Localhost Filter Bypass (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Server-Side Request Forgery",
+    "owasp": "A10:2021-Server-Side Request Forgery",
+    "description": "Bypass a naive string filter that blocks 'localhost' and '127.0.0.1' to retrieve the internal status endpoint flag.",
+    "flag_env": "FLAG_PING_TOOL_SSRF_MEDIUM",
+    "hints": [
+      "The application only checks whether the literal strings 'localhost' or '127.0.0.1' are present in the URL.",
+      "Linux resolves alternate IP notations like 0.0.0.0, 127.1, decimal (2130706433), hex (0x7f000001), or IPv6 [::] to the loopback interface."
+    ]
+  },
+  {
+    "id": "ping-tool-ssrf-hard",
+    "app": "ping-tool",
+    "title": "PingTool - SSRF CIDR/Hex/Redirect Bypass (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Server-Side Request Forgery",
+    "owasp": "A10:2021-Server-Side Request Forgery",
+    "description": "Bypass hostname resolution and flawed CIDR validation by exploiting alternative loopback addresses (127.0.0.2) or HTTP redirects.",
+    "flag_env": "FLAG_PING_TOOL_SSRF_HARD",
+    "hints": [
+      "The resolver checks if the destination matches a restrictive CIDR rule (127.0.0.1/32).",
+      "On Linux, the entire 127.0.0.0/8 subnet routes to localhost (e.g., http://127.0.0.2:8005/internal/status), or use an HTTP 302 redirect via /api/redirect."
+    ]
+  },
+  {
+    "id": "ping-tool-xss-easy",
+    "app": "ping-tool",
+    "title": "PingTool - Reflected XSS (Easy)",
+    "difficulty": "easy",
+    "points": 100,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Inject arbitrary HTML/JavaScript into the diagnostic lookup error response to capture the admin session context.",
+    "flag_env": "FLAG_PING_TOOL_XSS_EASY",
+    "hints": [
+      "User input provided in diagnostic host queries is echoed directly into HTML error banners with Jinja's safe filter.",
+      "Inject a classic <script>alert(1)</script> payload or check /api/audit/logs to observe reflection and leak the admin token."
+    ]
+  },
+  {
+    "id": "ping-tool-xss-medium",
+    "app": "ping-tool",
+    "title": "PingTool - Reflected XSS Tag Filter Bypass (Medium)",
+    "difficulty": "medium",
+    "points": 200,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Bypass a single-pass lowercase script tag filter using alternative HTML elements or mixed case to trigger reflected XSS.",
+    "flag_env": "FLAG_PING_TOOL_XSS_MEDIUM",
+    "hints": [
+      "The input sanitization strips '<script>' once using case-sensitive or single-pass replacement.",
+      "Try uppercase tags like <SCRIPT> or alternative event-driven tags such as <img src=x onerror=alert(1)> or <svg onload=alert(1)>."
+    ]
+  },
+  {
+    "id": "ping-tool-xss-hard",
+    "app": "ping-tool",
+    "title": "PingTool - Context-Breaking Reflected XSS (Hard)",
+    "difficulty": "hard",
+    "points": 300,
+    "category": "Cross-Site Scripting",
+    "owasp": "A03:2021-Injection",
+    "description": "Break out of an inline JavaScript string context where angle brackets are sanitized to execute arbitrary JavaScript.",
+    "flag_env": "FLAG_PING_TOOL_XSS_HARD",
+    "hints": [
+      "The application sanitizes '<' and '>', preventing injection of new HTML tags, but reflects user input inside an inline <script> variable.",
+      "Break out of the string boundary using \"; alert(1); // without requiring angle brackets."
+    ]
+  }
+]
