@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# VulnLab CTF - AWS EC2 Cloud-Init Provisioning Script
+# ==============================================================================
+set -euxo pipefail
+
+LOG_FILE="/var/log/vulnlab-user-data.log"
+exec > >(tee -a "$${LOG_FILE}" /dev/console) 2>&1
+
+echo "======================================================================"
+echo "  VULNLAB CTF - Provisioning AWS EC2 Instance"
+echo "  Date: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+echo "======================================================================"
+
+export DEBIAN_FRONTEND=noninteractive
+
+# 1. Update system packages and install prerequisites
+echo "[*] Updating apt repositories and installing prerequisites..."
+apt-get update -y
+apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    git \
+    jq \
+    nginx \
+    ufw \
+    net-tools
+
+# 2. Install Docker CE & Docker Compose Plugin
+echo "[*] Installing Docker CE..."
+if ! command -v docker >/dev/null 2>&1; then
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    sh /tmp/get-docker.sh
+    rm -f /tmp/get-docker.sh
+fi
+
+systemctl enable --now docker
+usermod -aG docker ubuntu
+
+echo "[*] Docker installed: $(docker --version)"
+echo "[*] Docker Compose installed: $(docker compose version)"
+
+# 3. Clone Repository
+INSTALL_DIR="/opt/vulnlab"
+echo "[*] Setting up application repository at $${INSTALL_DIR}..."
+rm -rf "$${INSTALL_DIR}"
+mkdir -p "$${INSTALL_DIR}"
+
+GIT_URL="${git_repo_url}"
+GIT_BRANCH="${git_branch}"
+
+echo "[*] Cloning $${GIT_URL} (branch: $${GIT_BRANCH})..."
+if ! git clone -b "$${GIT_BRANCH}" "$${GIT_URL}" "$${INSTALL_DIR}"; then
+    echo "[!] Branch checkout failed, cloning default branch..."
+    git clone "$${GIT_URL}" "$${INSTALL_DIR}"
+fi
+
+cd "$${INSTALL_DIR}"
+
+# 4. Configure Application for Cloud Deployment
+echo "[*] Reconfiguring Docker Compose to bind ports to external network interfaces..."
+# Replace loopback binding (127.0.0.1:) with external binding
+sed -i 's/127\.0\.0\.1://g' docker-compose.yml
+
+# Inject client-side dynamic host resolver into scoreboard web UI
+# This ensures challenge links (:8001, :8002, etc.) point to the EC2 host IP/domain in player browsers
+echo "[*] Injecting dynamic host resolution script into Scoreboard UI..."
+if [[ -f scoreboard/src/static/index.html ]]; then
+    python3 -c '
+with open("scoreboard/src/static/index.html", "r") as f:
+    html = f.read()
+
+script = """
+  <!-- Dynamic Host Resolution for AWS Deployment -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const currentHost = window.location.hostname;
+      if (currentHost && currentHost !== "127.0.0.1" && currentHost !== "localhost") {
+        document.querySelectorAll("a[href*=\"127.0.0.1\"]").forEach(link => {
+          link.href = link.href.replace("127.0.0.1", currentHost);
+        });
+      }
+    });
+  </script>
+</body>
+"""
+
+if "Dynamic Host Resolution" not in html and "</body>" in html:
+    html = html.replace("</body>", script)
+    with open("scoreboard/src/static/index.html", "w") as f:
+        f.write(html)
+    print("[+] Successfully injected host resolver script.")
+'
+fi
+
+# Ensure all scripts are executable
+chmod +x scripts/*.sh
+
+# Generate initial flags and secret keys
+echo "[*] Generating flags and cryptographically secure secrets..."
+./scripts/gen-flags.sh
+
+# Apply requested difficulty setting
+DESIRED_DIFFICULTY="${ctf_difficulty}"
+if [[ -n "$${DESIRED_DIFFICULTY}" ]]; then
+    echo "[*] Setting active difficulty to: $${DESIRED_DIFFICULTY}"
+    sed -i "s/^DIFFICULTY=.*/DIFFICULTY=$${DESIRED_DIFFICULTY}/" .env
+fi
+
+# 5. Configure Nginx Reverse Proxy on Port 80
+echo "[*] Setting up Nginx reverse proxy on port 80..."
+cat << 'NGINX_CONF' > /etc/nginx/sites-available/vulnlab
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name _;
+
+    client_max_body_size 50M;
+
+    # Proxy to Scoreboard UI & API
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+NGINX_CONF
+
+rm -f /etc/nginx/sites-enabled/default
+ln -sf /etc/nginx/sites-available/vulnlab /etc/nginx/sites-enabled/default
+nginx -t
+systemctl restart nginx
+
+# 6. Launch Containers via Docker Compose
+echo "[*] Launching VulnLab CTF containers..."
+./scripts/start.sh
+
+# 7. Write Ready Marker
+PUBLIC_IP=$(curl -s -m 3 http://169.254.169.254/latest/meta-data/public-ipv4 || curl -s -m 3 https://checkip.amazonaws.com || echo "localhost")
+
+cat << EOF > "$${INSTALL_DIR}/READY"
+VulnLab CTF is up and running!
+Date: $(date -u '+%Y-%m-%dT%H:%M:%SZ')
+Public IP: $${PUBLIC_IP}
+Scoreboard: http://$${PUBLIC_IP} (or http://$${PUBLIC_IP}:8000)
+Blog SQLi: http://$${PUBLIC_IP}:8001
+Notes IDOR: http://$${PUBLIC_IP}:8002
+File Share: http://$${PUBLIC_IP}:8003
+Shop Auth: http://$${PUBLIC_IP}:8004
+Ping Tool: http://$${PUBLIC_IP}:8005
+EOF
+
+touch /var/log/vulnlab-ready.flag
+echo "======================================================================"
+echo "  VULNLAB CTF DEPLOYMENT COMPLETE!"
+echo "======================================================================"
+cat "$${INSTALL_DIR}/READY"

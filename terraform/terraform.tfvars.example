@@ -1,0 +1,30 @@
+# AWS Region
+aws_region = "us-east-1"
+
+# Environment & Project Naming
+project_name = "vulnlab-ctf"
+environment  = "dev"
+
+# EC2 Sizing
+instance_type    = "t3.medium" # 2 vCPU, 4GB RAM (recommended for 7 containers)
+root_volume_size = 30          # 30GB gp3 disk
+
+# Optional: Specific AMI ID (leave empty to use latest official Ubuntu 24.04 LTS)
+# ami_id = "ami-xxxxxxxxxxxxxxxxx"
+
+# Optional: EC2 Key Pair Name for SSH access
+# key_name = "my-keypair"
+
+# Security: Allowed IP CIDRs for web traffic (Default: open to all)
+# Highly recommended to restrict to your own public IP, e.g. ["203.0.113.45/32"]
+allowed_cidr_blocks = ["0.0.0.0/0"]
+
+# Security: Allowed IP CIDRs for SSH (Port 22)
+ssh_cidr_blocks = ["0.0.0.0/0"]
+
+# CTF Git Repository
+git_repo_url = "https://github.com/MedAliBouzidi/ai-generated-ctf.git"
+git_branch   = "main"
+
+# CTF Initial Difficulty ("easy", "medium", or "hard")
+ctf_difficulty = "easy"
