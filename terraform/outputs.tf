@@ -3,6 +3,11 @@ output "instance_id" {
   value       = aws_instance.ctf_server.id
 }
 
+output "iam_instance_profile" {
+  description = "IAM Instance Profile attached to the EC2 instance"
+  value       = local.iam_instance_profile
+}
+
 output "public_ip" {
   description = "Public IPv4 address of the VulnLab CTF instance"
   value       = aws_instance.ctf_server.public_ip

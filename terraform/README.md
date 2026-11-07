@@ -43,7 +43,7 @@ graph TD
 - **VPC**: Isolated `10.0.0.0/16` network with DNS hostnames enabled.
 - **Subnet & Route Table**: Public subnet (`10.0.1.0/24`) attached to an Internet Gateway.
 - **Security Group**: Controlled ingress for HTTP (80), HTTPS (443), SSH (22), and CTF application ports (`8000`-`8005`).
-- **IAM Role & Instance Profile**: Configured with `AmazonSSMManagedInstanceCore` for secure AWS Systems Manager Session Manager access without needing SSH keys.
+- **IAM Role & Instance Profile**: Configured to use existing AWS Academy / Vocareum `LabRole` (`LabInstanceProfile`) by default (avoiding `iam:CreateRole` permission issues), or provisions a dedicated role with `AmazonSSMManagedInstanceCore` when `use_lab_role = false`.
 - **EC2 Instance**: Powered by Ubuntu 24.04 LTS on a `t3.medium` (2 vCPU, 4GB RAM) with 30GB gp3 encrypted root volume.
 - **Cloud-Init Automation (`user_data.sh.tftpl`)**:
   - Automatically installs Docker CE, Docker Compose plugin, Git, Curl, JQ, and Nginx.
@@ -155,6 +155,8 @@ You can customize parameters in `terraform.tfvars`:
 | `ctf_difficulty` | `"easy"` | Initial challenge difficulty (`easy`, `medium`, `hard`) |
 | `git_repo_url` | `"https://..."` | Git repository URL to clone and deploy |
 | `git_branch` | `"main"` | Git branch to deploy |
+| `use_lab_role` | `true` | Use existing AWS Academy `LabRole` (`LabInstanceProfile`) |
+| `existing_iam_instance_profile` | `"LabInstanceProfile"` | Existing instance profile name (AWS Academy defaults to `LabInstanceProfile`) |
 
 ---
 

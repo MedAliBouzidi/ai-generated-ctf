@@ -17,6 +17,11 @@ data "aws_ami" "ubuntu" {
 
 locals {
   ami_id = var.ami_id != "" ? var.ami_id : data.aws_ami.ubuntu[0].id
+  # AWS Academy attaches "LabRole" via the "LabInstanceProfile" instance profile.
+  # If the user sets "LabRole", map it automatically to "LabInstanceProfile".
+  iam_instance_profile = var.use_lab_role ? (
+    var.existing_iam_instance_profile == "LabRole" ? "LabInstanceProfile" : var.existing_iam_instance_profile
+  ) : aws_iam_instance_profile.ctf_instance_profile[0].name
 }
 
 # VulnLab CTF EC2 Host Instance
@@ -25,7 +30,7 @@ resource "aws_instance" "ctf_server" {
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.ctf_public_subnet.id
   vpc_security_group_ids = [aws_security_group.ctf_sg.id]
-  iam_instance_profile   = aws_iam_instance_profile.ctf_instance_profile.name
+  iam_instance_profile   = local.iam_instance_profile
   key_name               = var.key_name != "" ? var.key_name : null
 
   root_block_device {

@@ -28,3 +28,9 @@ git_branch   = "main"
 
 # CTF Initial Difficulty ("easy", "medium", or "hard")
 ctf_difficulty = "easy"
+
+# IAM Role Configuration (AWS Academy / Learner Lab)
+# Set use_lab_role to true to use pre-existing LabRole (LabInstanceProfile)
+use_lab_role                  = true
+existing_iam_instance_profile = "LabInstanceProfile"
+

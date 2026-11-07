@@ -86,3 +86,16 @@ variable "ctf_difficulty" {
     error_message = "Difficulty must be one of: 'easy', 'medium', 'hard'."
   }
 }
+
+variable "use_lab_role" {
+  description = "Whether to use existing AWS Academy / Vocareum LabRole (LabInstanceProfile) instead of creating a new IAM role. Default is true for AWS Academy compatibility."
+  type        = bool
+  default     = true
+}
+
+variable "existing_iam_instance_profile" {
+  description = "Name of the existing IAM instance profile to attach when use_lab_role is true (AWS Academy uses 'LabInstanceProfile' for 'LabRole')"
+  type        = string
+  default     = "LabInstanceProfile"
+}
+
